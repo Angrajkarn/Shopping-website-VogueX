@@ -15,7 +15,9 @@ import { AuthLayout } from "@/components/ui/auth-layout"
 import { GoogleButton } from "@/components/auth/google-button"
 import { OtpInput } from "@/components/auth/otp-input"
 
-export default function LoginPage() {
+import { Suspense } from "react"
+
+function LoginContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const redirectPath = searchParams.get('redirect') || '/profile'
@@ -311,5 +313,13 @@ export default function LoginPage() {
                 </div>
             </motion.div>
         </AuthLayout>
+    )
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-black text-white">Loading Auth...</div>}>
+            <LoginContent />
+        </Suspense>
     )
 }

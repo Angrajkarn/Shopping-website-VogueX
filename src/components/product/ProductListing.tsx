@@ -21,7 +21,7 @@ interface ProductListingProps {
     initialCategory?: string
 }
 
-export function ProductListing({ initialCategory }: ProductListingProps) {
+function ProductListingContent({ initialCategory }: ProductListingProps) {
     const searchParams = useSearchParams()
     // Prioritize search params, fallback to initialCategory
     const category = searchParams.get("category") || initialCategory
@@ -180,5 +180,13 @@ export function ProductListing({ initialCategory }: ProductListingProps) {
                 </div>
             </div>
         </div>
+    )
+}
+
+export function ProductListing(props: ProductListingProps) {
+    return (
+        <Suspense fallback={<div className="container mx-auto px-4 py-8 pt-24 text-center">Loading Products...</div>}>
+            <ProductListingContent {...props} />
+        </Suspense>
     )
 }
