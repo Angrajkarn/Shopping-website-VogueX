@@ -21,19 +21,19 @@ interface ProfileLayoutProps {
     children: React.ReactNode
 }
 
-export default function ProfileLayout({ children }: ProfileLayoutProps) {
+const navItems = [
+    { name: 'Overview', href: '/profile', icon: LayoutDashboard },
+    { name: 'My Orders', href: '/profile/orders', icon: Package },
+    { name: 'Saved Addresses', href: '/profile/addresses', icon: MapPin },
+    { name: 'Profile Settings', href: '/profile/settings', icon: Settings },
+]
+
+function SidebarContent() {
     const { user, logout } = useAuthStore()
     const router = useRouter()
     const pathname = usePathname()
 
-    const navItems = [
-        { name: 'Overview', href: '/profile', icon: LayoutDashboard },
-        { name: 'My Orders', href: '/profile/orders', icon: Package },
-        { name: 'Saved Addresses', href: '/profile/addresses', icon: MapPin },
-        { name: 'Profile Settings', href: '/profile/settings', icon: Settings },
-    ]
-
-    const SidebarContent = () => (
+    return (
         <div className="flex flex-col h-full bg-white">
             {/* User Profile Snippet */}
             <div className="p-6 border-b flex items-center gap-4">
@@ -89,6 +89,10 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
             </div>
         </div>
     )
+}
+
+export default function ProfileLayout({ children }: ProfileLayoutProps) {
+    const { user } = useAuthStore()
 
     return (
         <div className="min-h-screen bg-gray-50/50">
