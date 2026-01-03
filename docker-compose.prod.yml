@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    command: gunicorn -c gunicorn.conf.py config.asgi:application
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - DEBUG=False
+      - DATABASE_URL=postgres://voguex_user:securepassword@db:5432/voguex_db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CHANNEL_LAYERS_HOST=redis
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=voguex_db
+      - POSTGRES_USER=voguex_user
+      - POSTGRES_PASSWORD=securepassword
+
+  redis:
+    image: redis:7-alpine
+
+volumes:
+  postgres_data:
