@@ -2063,7 +2063,7 @@ export default function AnalyticsPage() {
                                             {returnReasons.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                                         </Pie>
                                         <Tooltip />
-                                        <Legend wrapperStyle={{ fontSize: '11px' }} Layout="vertical" verticalAlign="bottom" />
+                                        <Legend wrapperStyle={{ fontSize: '11px' }} layout="vertical" verticalAlign="bottom" />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </CardContent>
