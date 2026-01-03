@@ -2,43 +2,27 @@
 
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, MapPin } from "lucide-react"
-import "leaflet/dist/leaflet.css"
-import L from "leaflet"
 
-// Fix Leaflet marker icon issue
-const icon = L.icon({
-    iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-    iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-    shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
+// Dynamically import Map component to avoid SSR issues with Leaflet
+const AddressMap = dynamic(() => import("./AddressMap"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-full w-full flex items-center justify-center bg-gray-100 text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            Loading Map...
+        </div>
+    )
 })
 
 interface AddressFormProps {
     initialData?: any
     onSubmit: (data: any) => Promise<void>
     onCancel: () => void
-}
-
-function LocationMarker({ position, setPosition }: { position: [number, number], setPosition: (pos: [number, number]) => void }) {
-    const map = useMapEvents({
-        click(e) {
-            setPosition([e.latlng.lat, e.latlng.lng])
-        },
-    })
-
-    useEffect(() => {
-        map.flyTo(position, map.getZoom())
-    }, [position, map])
-
-    return position === null ? null : (
-        <Marker position={position} icon={icon}></Marker>
-    )
 }
 
 export function AddressForm({ initialData, onSubmit, onCancel }: AddressFormProps) {
@@ -85,11 +69,6 @@ export function AddressForm({ initialData, onSubmit, onCancel }: AddressFormProp
                 setPosition([lat, lon])
                 setValue("latitude", lat)
                 setValue("longitude", lon)
-
-                // Extract State/City from display_name if possible, or leave for user to fill
-                // Nominatim often gives detailed address, we can try to parse or just set location
-                // For now, let's auto-fill what we can if available in address details (requires different API call structure)
-                // Or we simply validate location exists
             } else {
                 setPincodeError("Invalid Pincode. Please check again.")
             }
@@ -153,15 +132,7 @@ export function AddressForm({ initialData, onSubmit, onCancel }: AddressFormProp
             </div>
 
             <div className="h-[300px] w-full rounded-md overflow-hidden border">
-                {typeof window !== 'undefined' && (
-                    <MapContainer center={position} zoom={13} style={{ height: "100%", width: "100%" }}>
-                        <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        />
-                        <LocationMarker position={position} setPosition={setPosition} />
-                    </MapContainer>
-                )}
+                <AddressMap position={position} setPosition={setPosition} />
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
