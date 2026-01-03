@@ -1161,7 +1161,7 @@ export default function AnalyticsPage() {
                                             {shareOfVoice.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                                         </Pie>
                                         <Tooltip />
-                                        <Legend layout="vertical" verticalAlign="middle" align="bottom" wrapperStyle={{ fontSize: '10px' }} />
+                                        <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '10px' }} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </CardContent>
