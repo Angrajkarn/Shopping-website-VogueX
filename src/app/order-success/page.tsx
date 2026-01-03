@@ -5,7 +5,9 @@ import { CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 
-export default function OrderSuccessPage() {
+import { Suspense } from "react"
+
+function OrderSuccessContent() {
     const searchParams = useSearchParams()
     const orderId = searchParams.get('orderId')
 
@@ -37,5 +39,13 @@ export default function OrderSuccessPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function OrderSuccessPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <OrderSuccessContent />
+        </Suspense>
     )
 }
