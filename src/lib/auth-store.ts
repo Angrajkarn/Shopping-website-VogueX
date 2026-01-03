@@ -11,6 +11,7 @@ interface User {
     super_coins?: number
     is_plus_member?: boolean
     profile_picture?: string | null
+    gender?: string
 }
 
 interface AuthState {
