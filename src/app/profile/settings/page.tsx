@@ -33,7 +33,8 @@ export default function SettingsPage() {
             first_name: "",
             last_name: "",
             email: "",
-            phone_number: ""
+            phone_number: "",
+            gender: ""
         }
     })
 
