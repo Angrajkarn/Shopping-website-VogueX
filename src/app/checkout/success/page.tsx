@@ -21,7 +21,9 @@ const calculateTotal = (items: any[]) => {
     return items.reduce((total, item) => total + (Number(item.price) * Number(item.quantity)), 0)
 }
 
-export default function OrderSuccessPage() {
+import { Suspense } from "react"
+
+function OrderSuccessContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const { token } = useAuthStore()
@@ -134,5 +136,13 @@ export default function OrderSuccessPage() {
                 </motion.div>
             </div>
         </div>
+    )
+}
+
+export default function OrderSuccessPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <OrderSuccessContent />
+        </Suspense>
     )
 }
