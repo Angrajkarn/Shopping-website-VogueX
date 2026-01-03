@@ -38,11 +38,11 @@ if %errorlevel% neq 0 (
 
 echo.
 echo [STEP 3] Starting Uvicorn ASGI Server (Production-Grade)...
-echo        Serving on http://127.0.0.1:8000
+echo        Serving on http://127.0.0.1:8080
 echo.
 
 :: Run Uvicorn without hot-reload (True Production Mode)
 :: Note: Multi-workers (-w 4) might be limited on Windows, using default worker configuration
-uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --log-level info
+uvicorn config.asgi:application --host 0.0.0.0 --port 8080 --log-level info
 
 endlocal

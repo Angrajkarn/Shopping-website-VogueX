@@ -20,7 +20,7 @@ export interface ProductResponse {
 }
 
 const BASE_URL = "https://dummyjson.com"
-const BACKEND_URL = "http://localhost:8080/api"
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
     const res = await fetch(url, options)
