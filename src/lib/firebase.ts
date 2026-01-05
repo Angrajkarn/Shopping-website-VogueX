@@ -2,15 +2,14 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDdVKp4ia8W70IyXrHeqMiZ62NOe8SJtcc",
-    authDomain: "voguexx-5f878.firebaseapp.com",
-    projectId: "voguexx-5f878",
-    storageBucket: "voguexx-5f878.firebasestorage.app",
-    messagingSenderId: "915985650932",
-    appId: "1:915985650932:web:ac1ca8b249107383b9faa1",
-    measurementId: "G-RB7V7J76S5",
-    // Fallback for DB URL (derived from project ID usually, but optional for Auth)
-    databaseURL: "https://voguexx-5f878-default-rtdb.firebaseio.com"
+    apiKey: "AIzaSyBr98MqUrXkVFBW5aazs4dnq9eVX7aaNL0",
+    authDomain: "voguex-370fe.firebaseapp.com",
+    databaseURL: "https://voguex-370fe-default-rtdb.firebaseio.com",
+    projectId: "voguex-370fe",
+    storageBucket: "voguex-370fe.firebasestorage.app",
+    messagingSenderId: "446304275788",
+    appId: "1:446304275788:web:f8e8c6fa010342842f93e9",
+    measurementId: "G-2CV8MPQEDR"
 };
 
 // Initialize Firebase (singleton pattern)

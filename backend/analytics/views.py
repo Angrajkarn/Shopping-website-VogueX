@@ -147,12 +147,6 @@ class InspiredBySearchView(APIView):
         })
 
 
-
-# Top level imports for StylistView (added here for clarity in replacement)
-import requests
-import os
-import re
-
 class StylistView(APIView):
     """
     AI Chatbot Logic for 'Fashion Stylist'
@@ -160,209 +154,73 @@ class StylistView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        try:
-            message = request.data.get('message', '').lower()
-            if not message:
-                return Response({"response": "I didn't catch that. Could you say it again?", "type": "text"})
+        message = request.data.get('message', '').lower()
+        if not message:
+            return Response({"response": "I didn't catch that. Could you say it again?", "type": "text"})
 
-            # D. FALLBACK BROAD SEARCH (If no specific keyword matched)
-            # Treat the entire message as a search query
-            broad_search_term = message.strip()
-            # Remove common stop words to clean up
-            stop_words = ['i', 'want', 'a', 'an', 'the', 'show', 'me', 'looking', 'for', 'need', 'recommend']
-            for w in stop_words:
-                broad_search_term = broad_search_term.replace(f" {w} ", " ").replace(f"{w} ", "")
+        # 1. Product Search Intent
+        # Simple keyword matching for MVP
+        keywords = ['saree', 'kurta', 'lehenga', 'shirt', 'dress', 'gown', 'jacket', 'shoe', 'watch']
+        found_keyword = next((k for k in keywords if k in message), None)
+
+        if found_keyword or "recommend" in message or "looking for" in message:
+            # Search DB
+            search_term = found_keyword if found_keyword else message.replace("looking for", "").strip()
             
-            broad_search_term = broad_search_term.strip()
-
-            found_results = []
-            if len(broad_search_term) > 2: # Avoid searching for single letters
-                query = Q(status='ACTIVE') & (
-                    Q(name__icontains=broad_search_term) | 
-                    Q(category__icontains=broad_search_term) | 
-                    Q(description_short__icontains=broad_search_term) |
-                    Q(brand__icontains=broad_search_term)
-                )
-                
-                fallback_products = Product.objects.filter(query)[:5]
-                
-                for p in fallback_products:
-                    # Get main image
+            products = Product.objects.filter(
+                Q(name__icontains=search_term) | 
+                Q(category__icontains=search_term)
+            ).filter(status='ACTIVE')[:5]
+            
+            if products.exists():
+                results = []
+                for p in products:
+                     # Get main image
                     img = p.images.filter(image_type='MAIN').first()
                     img_url = img.url if img else (p.images.first().url if p.images.exists() else "")
+                    
                     try:
                         variant = p.variants.first()
                         price = float(variant.price_selling) if variant else 0
                     except:
                         price = 0
-                        
-                    found_results.append({
+
+                    results.append({
                         'id': p.id,
                         'name': p.name,
                         'price': price,
                         'image': img_url
                     })
-
-            # --- GEMINI AI INTEGRATION ---
-            api_key = os.getenv("GEMINI_API_KEY")
-            ai_response_text = ""
-            suggestions = ["See More", "Filter by Price"]
-
-            if api_key:
-                try:
-                    # Prepare Context for AI
-                    context_str = ""
-                    if found_results:
-                        context_str = "I found these products in our catalog related to the query:\n"
-                        for p in found_results:
-                            context_str += f"- {p['name']} (Price: {p['price']})\n"
-                    else:
-                        context_str = "I couldn't find any specific individual products in the catalog matching this query directly."
-
-                    # Prompt Engineering
-                    prompt = {
-                        "contents": [{
-                            "parts": [{
-                                "text": f"""
-                                You are VogueBot, a high-fashion AI stylist for an elite fashion store.
-                                User Query: "{message}"
-                                
-                                Context (Database Results):
-                                {context_str}
-                                
-                                Your Goal:
-                                1. Be helpful, chic, and enthusiastic. Use emojis.
-                                2. If products were found, recommend them based on the user's vibe.
-                                3. If NO products were found, politely suggest broad categories like "Sarees", "Dresses", or "Jackets" that might fit the theme (e.g. for 'Wedding', suggest 'Silk Sarees').
-                                4. Keep it short (max 2-3 sentences).
-                                5. Do NOT mention "database" or "catalog". Say "our collection".
-                                """
-                            }]
-                        }]
-                    }
-
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
-                    response = requests.post(url, json=prompt, timeout=5)
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        candidates = data.get('candidates', [])
-                        if candidates and 'content' in candidates[0]:
-                            ai_response_text = candidates[0]['content']['parts'][0]['text']
-                        else:
-                             logger.error(f"Gemini No Candidates: {data}")
-                    else:
-                        logger.error(f"Gemini API Error: {response.text}")
-                        
-                except Exception as e:
-                    logger.error(f"Gemini Exception: {e}")
-            
-            # Fallback if AI fails or apiKey missing
-            if not ai_response_text:
-                if found_results:
-                    ai_response_text = f"I found these stunning picks for '{broad_search_term}'! Which one matches your vibe? ✨"
-                else:
-                     ai_response_text = "I couldn't find EXACT matches, but I'm sure our Summer Collection has something for you! ☀️"
-                     suggestions = ["Summer Collection", "New Arrivals"]
-
+                
+                return Response({
+                    "response": f"I found some stunning {search_term}s for you! ✨", 
+                    "type": "products",
+                    "data": results
+                })
+        
+        # 2. Support Intent
+        if "return" in message or "refund" in message:
             return Response({
-                "response": ai_response_text,
-                "type": "products" if found_results else "text",
-                "data": found_results,
-                "suggestions": suggestions
+                "response": "We offer a hassle-free 7-day return policy. You can initiate a return from your Orders page.",
+                "type": "text"
             })
             
-        except Exception as e:
-            logger.error(f"StylistView Error: {str(e)}")
-            return Response({
-                "response": "I'm having a little trouble connecting to my fashion brain right now. 🧠\n\nTry asking again in a moment!",
+        if "shipping" in message or "delivery" in message:
+             return Response({
+                "response": "Standard delivery takes 3-5 business days. Express delivery is available for select pincodes.",
                 "type": "text"
             })
 
-
-from .ml import UserAffinityEngine
-
-class PersonalizedFeedView(APIView):
-    """
-    Returns a personalized feed of products based on Machine Learning Affinity Scores.
-    """
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        session_id = request.query_params.get('session_id')
-        user = request.user
-        
-        # 1. Calculate Affinity
-        affinity = UserAffinityEngine.get_user_affinity(
-            user=user if user.is_authenticated else None,
-            session_id=session_id
-        )
-        
-        # 2. Get Base Queryset
-        queryset = Product.objects.filter(status='ACTIVE')
-        
-        # 3. Re-Rank using ML Engine
-        personalized_qs = UserAffinityEngine.get_personalized_feed(queryset, affinity)
-        
-        # Limit to 10 for the feed
-        products = personalized_qs[:10]
-        
-        results = []
-        for p in products:
-            img = p.images.filter(image_type='MAIN').first()
-            img_url = img.url if img else (p.images.first().url if p.images.exists() else "")
-            try:
-                variant = p.variants.first()
-                price = float(variant.price_selling) if variant else 0
-            except:
-                price = 0
-                
-            results.append({
-                'id': p.id,
-                'name': p.name,
-                'price': price,
-                'image': img_url,
-                'category': p.category, # Include for debugging
-                'affinity_score': getattr(p, 'affinity_score', 0)
+        # 3. Small Talk / Default
+        greetings = ["hi", "hello", "hey"]
+        if any(x in message for x in greetings):
+             return Response({
+                "response": "Hello! I'm your personal AI stylist. I can help you find the perfect outfit or answer questions. What are you looking for today?",
+                "type": "text"
             })
-            
+
         return Response({
-            "user_affinity": affinity, # Debug info to show user "We think you like..."
-            "feed": results
+            "response": "I'm currently training my fashion senses! Try asking for 'Red Sarees' or 'Summer Dresses'.",
+            "type": "text"
         })
 
-from .ml import CollaborativeFilteringEngine
-
-class RecommendationView(APIView):
-    """
-    Returns collaborative filtering recommendations ("People who viewed X...").
-    """
-    permission_classes = [AllowAny]
-
-    def get(self, request, product_id):
-        # 1. Get Recommendations from ML Engine
-        similar_ids = CollaborativeFilteringEngine.get_recommendations(product_id)
-        
-        # 2. Fetch Product Objects
-        products = Product.objects.filter(id__in=similar_ids, status='ACTIVE')
-        
-        # 3. Serialize (Basic)
-        results = []
-        for p in products:
-            img = p.images.filter(image_type='MAIN').first()
-            img_url = img.url if img else (p.images.first().url if p.images.exists() else "")
-            try:
-                variant = p.variants.first()
-                price = float(variant.price_selling) if variant else 0
-            except:
-                price = 0
-                
-            results.append({
-                'id': p.id,
-                'name': p.name,
-                'price': price,
-                'image': img_url,
-                'category': p.category
-            })
-            
-        return Response(results)

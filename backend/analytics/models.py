@@ -8,7 +8,6 @@ class UserInteraction(models.Model):
         ('SEARCH', 'Search Query'),
         ('CART_ADD', 'Add to Cart'),
         ('PURCHASE', 'Purchase'),
-        ('EXIT', 'Page Exit Summary'),
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)

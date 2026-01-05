@@ -6,15 +6,10 @@ import { api } from "@/lib/api"
 import { ProductGallery } from "@/components/product/ProductGallery"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Star, ShieldCheck, MapPin, AlertCircle, Zap, CornerUpRight } from "lucide-react"
+import { Loader2, Star, ShieldCheck, MapPin, AlertCircle, Zap } from "lucide-react"
 import { useCartStore } from "@/lib/store"
 import { useAuthStore } from "@/lib/auth-store"
 import { toast } from "sonner"
-import { RelatedProducts } from "@/components/product/RelatedProducts"
-import { ProductBundle } from "@/components/product/ProductBundle"
-import { useAnalytics } from "@/hooks/useAnalytics"
-import { usePageTracking } from "@/hooks/usePageTracking"
-import { StickyCartBar } from "@/components/product/StickyCartBar"
 
 // Types matching backend response
 interface ProductVariant {
@@ -39,7 +34,6 @@ interface ProductDetail {
     images: { id: number; url: string; image_type: string }[]
     variants: ProductVariant[]
     brand: string
-    category: any // Can be string or object
     reviews: {
         id: number
         user_name: string
@@ -106,27 +100,6 @@ export default function ProductPage() {
 
     const router = useRouter()
     const { isAuthenticated } = useAuthStore()
-    const { track } = useAnalytics()
-
-    useEffect(() => {
-        if (product) {
-            track('VIEW', {
-                product_id: product.id,
-                metadata: {
-                    title: product.name,
-                    price: parseFloat(product.variants[0]?.price_selling || "0"),
-                    image: product.images[0]?.url,
-                    category: typeof product.category === 'string' ? product.category : product.category?.name
-                }
-            })
-        }
-    }, [product?.id])
-
-    // Advanced Page Tracking (Time & Scroll)
-    usePageTracking(product?.id, {
-        category: typeof product?.category === 'string' ? product.category : product?.category?.name,
-        brand: product?.brand
-    })
 
     const handleAddToCart = (silent = false) => {
         if (!product || !selectedVariant) return
@@ -202,32 +175,9 @@ export default function ProductPage() {
                                 <h1 className="text-3xl font-bold">{product.name}</h1>
                                 <p className="text-muted-foreground mt-1">{product.description_short}</p>
                             </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-gray-500 hover:text-blue-600 hover:bg-blue-50"
-                                    onClick={() => {
-                                        const shareData = {
-                                            title: product.name,
-                                            text: `Check out ${product.name} on VogueX!`,
-                                            url: window.location.href
-                                        }
-                                        if (navigator.share) {
-                                            navigator.share(shareData).catch(console.error)
-                                        } else {
-                                            navigator.clipboard.writeText(window.location.href)
-                                            toast.success("Link copied to clipboard")
-                                        }
-                                    }}
-                                >
-                                    <CornerUpRight className="h-4 w-4 mr-2" />
-                                    Share
-                                </Button>
-                                <Button variant="ghost" size="icon">
-                                    <Star className="h-6 w-6 text-yellow-400 fill-yellow-400" />
-                                </Button>
-                            </div>
+                            <Button variant="ghost" size="icon">
+                                <Star className="h-6 w-6 text-yellow-400 fill-yellow-400" />
+                            </Button>
                         </div>
 
                         <div className="flex items-center gap-2 mt-2">
@@ -331,19 +281,6 @@ export default function ProductPage() {
                         <p className="whitespace-pre-line leading-relaxed">{product.description_long}</p>
                     </div>
 
-                    {/* Bundle & Save */}
-                    {product && selectedVariant && (
-                        <ProductBundle
-                            mainProduct={{
-                                id: product.id,
-                                name: product.name,
-                                price: parseFloat(selectedVariant.price_selling),
-                                image: product.images[0]?.url,
-                                category: product.category
-                            }}
-                        />
-                    )}
-
                     {/* Reviews Section */}
                     <div className="border-t pt-8 mt-8">
                         <h3 className="text-2xl font-bold mb-6">Customer Reviews</h3>
@@ -369,40 +306,8 @@ export default function ProductPage() {
                             </div>
                         )}
                     </div>
-
-
                 </div>
             </div>
-
-            {/* Similar Products (Full Width) */}
-            {product && (
-                <div className="mt-16">
-                    <RelatedProducts
-                        type="similar"
-                        categoryId={
-                            typeof product.category === 'string'
-                                ? product.category
-                                : (product.category?.slug || product.category?.name || product.category?.level3 || undefined)
-                        }
-                        currentProductId={product.id}
-                    />
-                </div>
-            )}
-
-            {/* Recommended For You (History) */}
-            <div className="mt-16">
-                <RelatedProducts type="history" />
-            </div>
-
-            {/* Sticky Add to Cart Bar */}
-            {product && selectedVariant && (
-                <StickyCartBar
-                    productName={product.name}
-                    productPrice={parseFloat(selectedVariant.price_selling)}
-                    productImage={product.images[0]?.url || ""}
-                    onAddToCart={() => handleAddToCart(false)}
-                />
-            )}
         </div>
     )
 }

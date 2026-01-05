@@ -8,9 +8,7 @@ from .serializers import (
     GoogleLoginSerializer, ForgotPasswordSerializer, ResetPasswordSerializer,
     ContactMessageSerializer, JobApplicationSerializer, NotificationSerializer
 )
-from .emails import get_welcome_email_html
-from django.core.mail import send_mail
-from .models import Address, OTP, ContactMessage, JobApplication, Notification, NewsletterSubscriber # Added NewsletterSubscriber
+from .models import Address, OTP, ContactMessage, JobApplication, Notification
 from orders.models import Order
 from rest_framework_simplejwt.tokens import RefreshToken
 import random
@@ -420,33 +418,3 @@ class NotificationListView(generics.ListAPIView):
             return Response({"status": "success"})
 
         return Response({"error": "Invalid request"}, status=400)
-
-class SubscribeView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        email = request.data.get('email')
-        if not email:
-            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Save subscriber
-        subscriber, created = NewsletterSubscriber.objects.get_or_create(email=email)
-        
-        # Send Email
-        try:
-            html_content = get_welcome_email_html(email)
-            print(f"DEBUG: Sending Newsletter to {email}")
-            send_mail(
-                subject="Welcome to the VogueX Revolution 🚀",
-                message="Welcome to VogueX!", # Fallback text
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                html_message=html_content,
-                fail_silently=False
-            )
-            return Response({'message': 'Subscribed successfully! Check your inbox 🚀'})
-        except Exception as e:
-            print(f"Email Error: {e}")
-            import traceback
-            traceback.print_exc()
-            return Response({'message': 'Subscribed (Email failed to send)'})

@@ -39,9 +39,6 @@ import { RecentlyViewed } from "@/components/home/RecentlyViewed";
 import { InspiredBySearch } from "@/components/home/InspiredBySearch";
 import { LiveFOMOTicker } from "@/components/home/LiveFOMOTicker";
 import { FashionStylist } from "@/components/ai/FashionStylist";
-import { VideoBanner } from "@/components/home/VideoBanner";
-import { TrendingTicker } from "@/components/home/TrendingTicker";
-import PersonalizedFeed from "@/components/home/PersonalizedFeed";
 
 const electronics = [
   { id: 1, name: "MacBook Pro", price: "From ₹1,29,999", offer: "Min 10% Off", image: "https://cdn.dummyjson.com/product-images/laptops/apple-macbook-pro-14-inch-space-grey/thumbnail.webp" },
@@ -76,16 +73,10 @@ export default function Home() {
       {/* 1. Top Category Navigation */}
       <TopCategoryNavbar />
 
-      {/* 1.5. Live Trending Ticker */}
-      <TrendingTicker />
-
       {/* 2. Hero Section */}
       <div className="relative bg-white pb-2">
         <HeroCarousel />
       </div>
-
-      {/* 2.5. Personalized Feed (Machine Learning) */}
-      <PersonalizedFeed />
 
       {/* 3. Recently Viewed (ML Engine) */}
       <RecentlyViewed />
@@ -187,7 +178,22 @@ export default function Home() {
       </div>
 
       {/* 20. Video Banner */}
-      <VideoBanner />
+      <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2070&auto=format&fit=crop"
+          alt="Fashion Film"
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative z-10 text-center text-white space-y-8 max-w-4xl px-6">
+          <h2 className="text-6xl md:text-8xl font-black tracking-tighter leading-none">THE NEW VOGUE</h2>
+          <p className="text-lg md:text-xl font-medium tracking-widest uppercase opacity-90">Cinematic Collection 2025</p>
+          <Button size="lg" className="bg-white text-black hover:bg-white/90 rounded-full px-10 h-16 font-bold text-lg gap-2 shadow-[0_0_40px_rgba(255,255,255,0.3)] transition-all hover:scale-105">
+            <Play className="w-5 h-5 fill-current" /> Watch Campaign
+          </Button>
+        </div>
+      </section>
 
       {/* Explore More - Infinite Feed [Phase 3] */}
       <ExploreMore />

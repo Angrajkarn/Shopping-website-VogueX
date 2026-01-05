@@ -49,28 +49,11 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
 export const api = {
     // Products (Backend)
-    async getProducts(category?: string, limit = 20, skip = 0, subcategory?: string, sort?: string, filters?: any): Promise<ProductResponse> {
+    async getProducts(category?: string, limit = 20, skip = 0): Promise<ProductResponse> {
         let url = `${BACKEND_URL}/products/?limit=${limit}&offset=${skip}`
         if (category) {
+            // Use strict category filter if backend supports it (it does now)
             url += `&category=${encodeURIComponent(category)}`
-        }
-        if (subcategory) {
-            url += `&subcategory=${encodeURIComponent(subcategory)}`
-        }
-        if (sort) {
-            url += `&sort=${encodeURIComponent(sort)}`
-        }
-        // Advanced Filters
-        if (filters) {
-            if (filters.minPrice) url += `&min_price=${filters.minPrice}`
-            if (filters.maxPrice) url += `&max_price=${filters.maxPrice}`
-            if (filters.brand) url += `&brand=${encodeURIComponent(filters.brand)}`
-            if (filters.rating) url += `&rating=${filters.rating}`
-            if (filters.discount) url += `&discount=${filters.discount}`
-            if (filters.availability) url += `&availability=${filters.availability}`
-            if (filters.gender) url += `&gender=${encodeURIComponent(filters.gender)}`
-            if (filters.color) url += `&color=${encodeURIComponent(filters.color)}`
-            if (filters.size) url += `&size=${encodeURIComponent(filters.size)}`
         }
 
         const res = await fetch(url)
@@ -731,65 +714,6 @@ export const api = {
         } catch (e) {
             console.error("Agent error", e)
             return { type: "text", response: "I'm having a little trouble connecting to my fashion brain. Try again?" }
-        }
-    },
-
-    async getPersonalizedFeed(session_id?: string, token?: string) {
-        let url = `${BACKEND_URL}/analytics/feed/`
-        if (session_id) url += `?session_id=${session_id}`
-
-        const headers: any = {}
-        if (token) headers['Authorization'] = `Bearer ${token}`
-
-        const res = await fetch(url, { headers })
-        if (!res.ok) return { user_affinity: {}, feed: [] }
-        return res.json()
-    },
-
-    async getRecommendations(productId: string | number) {
-        const url = `${BACKEND_URL}/analytics/recommendations/${productId}/`
-        const res = await fetch(url)
-        if (!res.ok) return [] // Fallback to empty array (content-based)
-        return res.json()
-    },
-
-    async getSearchSuggestions(query: string) {
-        if (!query || query.length < 2) return []
-        const url = `${BACKEND_URL}/products/suggestions/?q=${encodeURIComponent(query)}`
-        try {
-            const res = await fetch(url)
-            if (!res.ok) return []
-            return res.json()
-        } catch (e) {
-            return []
-        }
-    },
-
-    async subscribeNewsletter(email: string) {
-        try {
-            const res = await fetch(`${BACKEND_URL}/users/newsletter/subscribe/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            })
-            return await res.json()
-        } catch (e) {
-            console.error("Newsletter Error:", e)
-            return { message: "Failed to subscribe" }
-        }
-    },
-
-    async scrapeProduct(url: string) {
-        try {
-            const res = await fetch(`${BACKEND_URL}/products/scrape/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url })
-            })
-            return await res.json()
-        } catch (e) {
-            console.error("Scraper Error:", e)
-            return { error: "Failed to scrape product" }
         }
     },
 

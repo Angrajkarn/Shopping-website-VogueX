@@ -89,7 +89,7 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
                 <div className="aspect-[3/4] relative overflow-hidden">
                     <Image
                         src={image || "https://dummyjson.com/image/400x400/008080/ffffff?text=No+Image"}
-                        alt={name || "Product Image"}
+                        alt={name}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
@@ -128,14 +128,14 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
                 </div>
 
                 <div className="flex items-center justify-between mt-4">
-                    <span className="font-bold text-lg">₹{price.toFixed(2)}</span>
+                    <span className="font-bold text-lg">${price.toFixed(2)}</span>
                     <Button
                         size="sm"
                         variant="outline"
                         className="rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
                         onClick={() => {
                             addItem({ id, name, price, image, category, quantity: 1 })
-                            track('CART_ADD', { product_id: id, metadata: { price, currency: 'INR' } })
+                            track('CART_ADD', { product_id: id, metadata: { price, currency: 'USD' } })
                         }}
                     >
                         <ShoppingCart className="h-4 w-4 mr-2" />

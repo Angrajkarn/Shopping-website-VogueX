@@ -1,13 +1,12 @@
 "use client"
 
 import { ArrowRight } from "lucide-react"
-import Link from "next/link"
 
 const budgetitems = [
-    { title: "Under ₹499", image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=500&q=80", color: "bg-blue-50", link: "/products?sort=price-asc" },
-    { title: "Under ₹999", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80", color: "bg-green-50", link: "/products?sort=price-asc" },
-    { title: "Under ₹1499", image: "https://images.unsplash.com/photo-1627384113743-6bd5a479fffd?w=500&q=80", color: "bg-purple-50", link: "/products?sort=price-asc" },
-    { title: "Min. 50% Off", image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80", color: "bg-orange-50", link: "/products?sort=discount" },
+    { title: "Under ₹499", image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=500&q=80", color: "bg-blue-50" },
+    { title: "Under ₹999", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80", color: "bg-green-50" },
+    { title: "Under ₹1499", image: "https://images.unsplash.com/photo-1627384113743-6bd5a479fffd?w=500&q=80", color: "bg-purple-50" },
+    { title: "Min. 50% Off", image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80", color: "bg-orange-50" },
 ]
 
 export function BudgetBuys() {
@@ -17,7 +16,7 @@ export function BudgetBuys() {
                 <h3 className="text-2xl font-bold mb-6 text-slate-800">Budget Buys</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {budgetitems.map((item, idx) => (
-                        <Link href={item.link} key={idx} className={`relative h-48 rounded-lg overflow-hidden cursor-pointer group ${item.color} border border-slate-100 block`}>
+                        <div key={idx} className={`relative h-48 rounded-lg overflow-hidden cursor-pointer group ${item.color} border border-slate-100`}>
                             <div className="absolute inset-0 z-0">
                                 <img src={item.image} alt={item.title} className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500" />
                             </div>
@@ -27,7 +26,7 @@ export function BudgetBuys() {
                                     Shop Now <ArrowRight size={14} />
                                 </span>
                             </div>
-                        </Link>
+                        </div>
                     ))}
                 </div>
             </div>

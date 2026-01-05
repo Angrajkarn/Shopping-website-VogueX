@@ -1,97 +1,98 @@
 
 import requests
 from bs4 import BeautifulSoup
-import json
 import re
+import json
 
 class ScraperService:
     def __init__(self):
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
 
     def scrape_product(self, url):
         try:
             response = requests.get(url, headers=self.headers, timeout=10)
-            if response.status_code != 200:
-                return {"error": f"Failed to fetch content (Status: {response.status_code})"}
-
+            response.raise_for_status()
             soup = BeautifulSoup(response.content, 'html.parser')
             
             data = {
-                "title": self._get_title(soup),
-                "price": self._get_price(soup),
-                "image": self._get_image(soup),
-                "description": self._get_description(soup),
-                "source_url": url
+                'title': self._extract_title(soup),
+                'price': self._extract_price(soup),
+                'image': self._extract_image(soup),
+                'description': self._extract_description(soup),
+                'source_url': url
             }
             
+            # Additional Heuristic: Check for JSON-LD (Schema.org)
+            json_ld = soup.find('script', type='application/ld+json')
+            if json_ld:
+                try:
+                    schema_data = json.loads(json_ld.string)
+                    # Helper to find specific schema type if list
+                    if isinstance(schema_data, list):
+                        for item in schema_data:
+                            if item.get('@type') in ['Product', 'IndividualProduct']:
+                                schema_data = item
+                                break
+                    
+                    if schema_data.get('@type') in ['Product', 'IndividualProduct']:
+                        data['title'] = schema_data.get('name') or data['title']
+                        data['image'] = schema_data.get('image') or data['image']
+                        if isinstance(data['image'], list): data['image'] = data['image'][0]
+                        data['description'] = schema_data.get('description') or data['description']
+                        
+                        price = self._extract_price_from_schema(schema_data)
+                        if price: data['price'] = price
+                except:
+                    pass
+                    
             return data
-
         except Exception as e:
-            return {"error": str(e)}
+            return {'error': str(e)}
 
-    def _get_title(self, soup):
-        # 1. OpenGraph
-        og_title = soup.find("meta", property="og:title")
-        if og_title and og_title.get("content"):
-            return og_title["content"]
-        
-        # 2. H1
-        h1 = soup.find("h1")
-        if h1:
-            return h1.text.strip()
-            
-        # 3. Title tag
-        if soup.title:
-            return soup.title.text.strip()
-            
+    def _extract_title(self, soup):
+        og_title = soup.find('meta', property='og:title')
+        if og_title: return og_title.get('content')
+        h1 = soup.find('h1')
+        if h1: return h1.get_text(strip=True)
         return "Unknown Product"
 
-    def _get_image(self, soup):
-        # 1. OpenGraph
-        og_image = soup.find("meta", property="og:image")
-        if og_image and og_image.get("content"):
-            return og_image["content"]
-            
-        # 2. Twitter Card
-        twitter_image = soup.find("meta", name="twitter:image")
-        if twitter_image and twitter_image.get("content"):
-            return twitter_image["content"]
-            
-        # 3. First large image (heuristic)
-        # This is risky, but a fallback.
-        return None
-
-    def _get_description(self, soup):
-        og_desc = soup.find("meta", property="og:description")
-        if og_desc and og_desc.get("content"):
-            return og_desc["content"]
-        
-        meta_desc = soup.find("meta", name="description")
-        if meta_desc and meta_desc.get("content"):
-            return meta_desc["content"]
-            
+    def _extract_image(self, soup):
+        og_image = soup.find('meta', property='og:image')
+        if og_image: return og_image.get('content')
+        # Try generic product image class
+        img = soup.find('img', id='landingImage') # Amazon
+        if img: return img.get('src')
         return ""
 
-    def _get_price(self, soup):
-        # 1. Schema.org JSON-LD (Best Standard)
-        # Look for <script type="application/ld+json">
-        scripts = soup.find_all('script', type='application/ld+json')
-        for script in scripts:
-            try:
-                data = json.loads(script.string)
-                # Handle list of schemas or single schema
-                if isinstance(data, list):
-                    for item in data:
-                        price = self._extract_price_from_schema(item)
-                        if price: return price
-                else:
-                    price = self._extract_price_from_schema(data)
-                    if price: return price
-            except:
-                continue
+    def _extract_description(self, soup):
+        og_desc = soup.find('meta', property='og:description')
+        if og_desc: return og_desc.get('content')
+        desc = soup.find('meta', attrs={'name': 'description'})
+        if desc: return desc.get('content')
+        return ""
+
+    def _extract_price(self, soup):
+        # 1. Look for specific IDs/Classes for major sites
+        selectors = [
+            '#priceblock_ourprice', '#priceblock_dealprice', # Amazon Old
+            '.a-price-whole', # Amazon New
+            '.pdp-price', # Myntra
+            '._30jeq3', # Flipkart
+        ]
+        
+        for sel in selectors:
+            tag = soup.select_one(sel)
+            if tag:
+                text = tag.get_text(strip=True)
+                # Cleanup currency symbols
+                match = re.search(r'[\d,]+\.?\d*', text)
+                if match:
+                    try:
+                        return float(match.group(0).replace(',', ''))
+                    except:
+                        continue
                 
         # 2. Heuristic: Look for currency symbols in text near "price" classes
         # Expanded heuristic for Amazon/Myntra/Flipkart specific classes

@@ -71,7 +71,7 @@ export function CartSidebar() {
                                         <div className="flex-1">
                                             <div className="flex justify-between mb-1">
                                                 <h3 className="font-medium line-clamp-1">{item.name}</h3>
-                                                <p className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                                                <p className="font-bold">${(item.price * item.quantity).toFixed(2)}</p>
                                             </div>
                                             <p className="text-xs text-muted-foreground mb-2">
                                                 {item.color} / {item.size}
@@ -109,7 +109,7 @@ export function CartSidebar() {
                             <div className="p-4 border-t bg-accent/5 space-y-4">
                                 <div className="flex justify-between text-lg font-bold">
                                     <span>Total</span>
-                                    <span>₹{total.toFixed(2)}</span>
+                                    <span>${total.toFixed(2)}</span>
                                 </div>
                                 <Button
                                     className="w-full"

@@ -53,7 +53,6 @@ export function DynamicCategoryRow({ title, category, bgImage, textColor }: Dyna
             bgImage={bgImage}
             products={products}
             textColor={textColor}
-            category={category}
         />
     )
 }

@@ -3,10 +3,6 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
-import { Share2, Copy } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-
 interface ProductGalleryProps {
     images: { id: number; url: string; image_type: string }[]
 }
@@ -14,32 +10,6 @@ interface ProductGalleryProps {
 export function ProductGallery({ images }: ProductGalleryProps) {
     // Sort images: MAIN first, then others by display_order if available (assumed backend sorts)
     const [selectedImage, setSelectedImage] = useState(images[0]?.url || "")
-
-    const handleShare = async () => {
-        const shareData = {
-            title: 'Check out this product on VogueX!',
-            text: 'I found this amazing fashion item. Have a look!',
-            url: window.location.href
-        }
-
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData)
-            } catch (err) {
-                console.log('Error sharing:', err)
-            }
-        } else {
-            // Fallback
-            try {
-                await navigator.clipboard.writeText(window.location.href)
-                toast.success("Link copied to clipboard", {
-                    icon: <Copy className="h-4 w-4 text-green-500" />
-                })
-            } catch (err) {
-                toast.error("Failed to copy link")
-            }
-        }
-    }
 
     if (!images || images.length === 0) return <div className="bg-gray-100 aspect-square rounded-xl" />
 

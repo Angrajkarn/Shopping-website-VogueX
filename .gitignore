@@ -38,4 +38,9 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+*.tsbuildinfo
 next-env.d.ts
+
+# User-specific / Test scripts
+backend/test_gemini.py
+test_atlas.py

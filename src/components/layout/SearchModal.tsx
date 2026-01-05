@@ -19,31 +19,17 @@ export function SearchModal({ children }: { children: React.ReactNode }) {
     const router = useRouter()
     const { track } = useAnalytics()
 
-    const [mounted, setMounted] = React.useState(false)
-
+    // Mock suggestions or fetch from backend
     React.useEffect(() => {
-        setMounted(true)
-    }, [])
-
-    // Live Suggestions
-    React.useEffect(() => {
-        if (!mounted) return
-
-        const fetchSuggestions = async () => {
-            if (query.length > 2) {
-                try {
-                    const results = await api.getSearchSuggestions(query)
-                    setSuggestions(results)
-                } catch (e) {
-                    setSuggestions([])
-                }
-            } else {
-                setSuggestions([])
-            }
+        if (query.length > 2) {
+            // In a real app, debounce and fetch from api.searchProducts(query) to get suggestions
+            // For now, mock based on query
+            if ("sarees".includes(query.toLowerCase())) setSuggestions(["Silk Saree", "Cotton Saree", "Banarasi Saree"])
+            else if ("kurta".includes(query.toLowerCase())) setSuggestions(["Mens Kurta", "Womens Kurta Set", "Yellow Kurta"])
+            else setSuggestions([])
+        } else {
+            setSuggestions([])
         }
-
-        const timeoutId = setTimeout(fetchSuggestions, 300) // Debounce 300ms
-        return () => clearTimeout(timeoutId)
     }, [query])
 
     const handleSearch = (e?: React.FormEvent, term?: string) => {
@@ -96,8 +82,6 @@ export function SearchModal({ children }: { children: React.ReactNode }) {
             setSuggestions(["Red Floral Dress", "Floral Maxi Dress", "Summer Floral Print"])
         }, 2000)
     }
-
-    if (!mounted) return <>{children}</>
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>

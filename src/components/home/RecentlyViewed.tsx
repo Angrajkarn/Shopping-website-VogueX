@@ -16,10 +16,8 @@ export function RecentlyViewed() {
 
         const fetchHistory = async () => {
             try {
-                console.log("RecentlyViewed: Fetching history for session:", sessionId)
                 // Fetch using session ID
                 const data = await api.getHistory(sessionId)
-                console.log("RecentlyViewed: API Response:", data)
                 setHistory(data)
             } catch (error) {
                 console.error("Failed to load history", error)
