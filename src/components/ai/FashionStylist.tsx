@@ -16,6 +16,7 @@ type Message = {
     content: string
     type: 'text' | 'products'
     data?: any[]
+    suggestions?: string[]
     timestamp: Date
 }
 
@@ -65,6 +66,7 @@ export function FashionStylist() {
                 content: res.response,
                 type: res.type || 'text',
                 data: res.data,
+                suggestions: res.suggestions, // Capture suggestions
                 timestamp: new Date()
             }
 
@@ -116,33 +118,50 @@ export function FashionStylist() {
                         {/* Messages */}
                         <ScrollArea className="flex-1 p-4 bg-slate-50/50">
                             <div className="space-y-4">
-                                {messages.map((msg) => (
-                                    <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                        <div
-                                            className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === 'user'
-                                                ? 'bg-purple-600 text-white rounded-br-none'
-                                                : 'bg-white border shadow-sm rounded-tl-none text-slate-700'
-                                                }`}
-                                        >
-                                            {msg.content}
+                                {messages.map((msg, idx) => (
+                                    <div key={msg.id} className="flex flex-col gap-2">
+                                        <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div
+                                                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${msg.role === 'user'
+                                                    ? 'bg-purple-600 text-white rounded-br-none'
+                                                    : 'bg-white border rounded-tl-none text-slate-700'
+                                                    }`}
+                                            >
+                                                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
 
-                                            {/* Product Carousel inside Context */}
-                                            {msg.type === 'products' && msg.data && (
-                                                <div className="mt-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                                    {msg.data.map((p: any) => (
-                                                        <Link href={`/products/${p.id}`} key={p.id} className="min-w-[120px] bg-slate-50 rounded-lg border overflow-hidden block hover:opacity-90 transition-opacity no-underline">
-                                                            <div className="aspect-[3/4] relative bg-slate-200">
-                                                                <img src={p.image} className="object-cover w-full h-full" alt={p.name} />
-                                                            </div>
-                                                            <div className="p-2">
-                                                                <p className="font-medium text-xs truncate text-slate-900">{p.name}</p>
-                                                                <p className="text-xs text-purple-600 font-bold">₹{p.price}</p>
-                                                            </div>
-                                                        </Link>
-                                                    ))}
-                                                </div>
-                                            )}
+                                                {/* Product Carousel inside Context */}
+                                                {msg.type === 'products' && msg.data && (
+                                                    <div className="mt-3 flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x">
+                                                        {msg.data.map((p: any) => (
+                                                            <Link href={`/products/${p.id}`} key={p.id} className="min-w-[140px] snap-center bg-white rounded-xl border border-slate-100 overflow-hidden block hover:shadow-md transition-all no-underline group">
+                                                                <div className="aspect-[3/4] relative bg-slate-100 overflow-hidden">
+                                                                    <img src={p.image} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" alt={p.name} />
+                                                                </div>
+                                                                <div className="p-2.5">
+                                                                    <p className="font-medium text-xs truncate text-slate-900">{p.name}</p>
+                                                                    <p className="text-xs text-purple-600 font-bold mt-0.5">₹{p.price}</p>
+                                                                </div>
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
+
+                                        {/* Quick Reply Chips */}
+                                        {msg.role === 'bot' && msg.suggestions && idx === messages.length - 1 && (
+                                            <div className="flex gap-2 flex-wrap ml-2 animate-in fade-in slide-in-from-left-4 duration-500">
+                                                {msg.suggestions.map((s) => (
+                                                    <button
+                                                        key={s}
+                                                        onClick={() => setInput(s)}
+                                                        className="text-xs bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full border border-purple-100 hover:bg-purple-100 transition-colors"
+                                                    >
+                                                        {s}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                                 {isTyping && (

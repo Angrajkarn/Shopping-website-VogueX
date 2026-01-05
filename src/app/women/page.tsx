@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react"
 export default function WomenPage() {
     return (
         <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
-            <ProductListing initialCategory="womens-dresses" />
+            <ProductListing initialCategory="Women" />
         </Suspense>
     )
 }

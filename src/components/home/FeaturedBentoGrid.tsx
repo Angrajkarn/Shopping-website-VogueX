@@ -20,7 +20,7 @@ export function FeaturedBentoGrid() {
             <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[600px]">
 
                 {/* Large/Tall item */}
-                <Link href="/shop?category=streetwear" className="md:col-span-2 md:row-span-2 relative rounded-3xl overflow-hidden group cursor-pointer block">
+                <Link href="/products?category=Men&subcategory=Topwear" className="md:col-span-2 md:row-span-2 relative rounded-3xl overflow-hidden group cursor-pointer block">
                     <motion.div
                         whileHover={{ scale: 0.98 }}
                         className="h-full w-full"
@@ -42,7 +42,7 @@ export function FeaturedBentoGrid() {
                 </Link>
 
                 {/* Top Right Landscape */}
-                <Link href="/shop?category=luxury" className="md:col-span-2 relative rounded-3xl overflow-hidden group cursor-pointer min-h-[250px] block">
+                <Link href="/products?category=Women&subcategory=Bags" className="md:col-span-2 relative rounded-3xl overflow-hidden group cursor-pointer min-h-[250px] block">
                     <motion.div
                         whileHover={{ scale: 0.98 }}
                         className="h-full w-full"
@@ -62,7 +62,7 @@ export function FeaturedBentoGrid() {
                 </Link>
 
                 {/* Bottom Center */}
-                <Link href="/shop?category=sportswear" className="relative rounded-3xl overflow-hidden group cursor-pointer min-h-[250px] block">
+                <Link href="/products?category=Men&subcategory=Footwear" className="relative rounded-3xl overflow-hidden group cursor-pointer min-h-[250px] block">
                     <motion.div
                         whileHover={{ scale: 0.98 }}
                         className="h-full w-full"
@@ -82,7 +82,7 @@ export function FeaturedBentoGrid() {
                 </Link>
 
                 {/* Bottom Right */}
-                <Link href="/shop?category=accessories" className="relative rounded-3xl overflow-hidden group cursor-pointer min-h-[250px] block">
+                <Link href="/products?category=Accessories&subcategory=Watches" className="relative rounded-3xl overflow-hidden group cursor-pointer min-h-[250px] block">
                     <motion.div
                         whileHover={{ scale: 0.98 }}
                         className="h-full w-full"

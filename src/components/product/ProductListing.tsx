@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { FilterSidebar } from "@/components/product/FilterSidebar"
@@ -25,6 +26,7 @@ function ProductListingContent({ initialCategory }: ProductListingProps) {
     const searchParams = useSearchParams()
     // Prioritize search params, fallback to initialCategory
     const category = searchParams.get("category") || initialCategory
+    const subcategory = searchParams.get("subcategory") || undefined
 
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
@@ -33,21 +35,21 @@ function ProductListingContent({ initialCategory }: ProductListingProps) {
     const [offset, setOffset] = useState(0)
     const [sortBy, setSortBy] = useState("featured")
 
-    // Reset when category changes
-    useEffect(() => {
-        setProducts([])
-        setOffset(0)
-        setHasMore(true)
-        setLoading(true)
-
-        // Initial Fetch
-        fetchProducts(0, true)
-    }, [category])
-
-    const fetchProducts = async (currentOffset: number, isInitial: boolean) => {
+    const fetchProducts = React.useCallback(async (currentOffset: number, isInitial: boolean) => {
         try {
             const LIMIT = 40
-            const data = await getProducts(category || undefined, LIMIT, currentOffset)
+            const filters = {
+                minPrice: searchParams.get("minPrice"),
+                maxPrice: searchParams.get("maxPrice"),
+                brand: searchParams.get("brand"),
+                rating: searchParams.get("minRating"),
+                discount: searchParams.get("discount"),
+                availability: searchParams.get("availability"),
+                gender: searchParams.get("gender"),
+                color: searchParams.get("color"),
+                size: searchParams.get("size")
+            }
+            const data = await getProducts(category || undefined, LIMIT, currentOffset, subcategory, sortBy, filters)
 
             if (data.products.length < LIMIT) {
                 setHasMore(false)
@@ -68,7 +70,18 @@ function ProductListingContent({ initialCategory }: ProductListingProps) {
             setLoading(false)
             setFetchingMore(false)
         }
-    }
+    }, [category, subcategory, sortBy, searchParams])
+
+    // Reset when dependencies change
+    useEffect(() => {
+        setProducts([])
+        setOffset(0)
+        setHasMore(true)
+        setLoading(true)
+
+        // Initial Fetch
+        fetchProducts(0, true)
+    }, [fetchProducts])
 
     // Infinite Scroll Observer
     useEffect(() => {
@@ -116,7 +129,7 @@ function ProductListingContent({ initialCategory }: ProductListingProps) {
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h1 className="text-3xl font-bold capitalize">
-                                {category ? category.replace("-", " ") : "All Products"}
+                                {subcategory ? `${subcategory} (${category})` : (category ? category.replace("-", " ") : "All Products")}
                             </h1>
                             <p className="text-muted-foreground mt-1">
                                 {products.length} items found

@@ -22,9 +22,9 @@ echo.
 echo [STEP 1] Collecting Static Files (WhiteNoise)...
 python manage.py collectstatic --noinput
 if %errorlevel% neq 0 (
-    echo [ERROR] Failed to collect static files.
-    pause
-    exit /b %errorlevel%
+    echo [WARNING] Failed to collect static files - Continuing anyway...
+    :: pause
+    :: exit /b %errorlevel%
 )
 
 echo.

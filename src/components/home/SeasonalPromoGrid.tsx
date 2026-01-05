@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export function SeasonalPromoGrid() {
     return (
@@ -10,7 +11,7 @@ export function SeasonalPromoGrid() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-auto md:h-[500px]">
 
                     {/* Large Left Item */}
-                    <div className="md:col-span-1 relative h-[300px] md:h-full group overflow-hidden cursor-pointer">
+                    <Link href="/products?category=mens-shirts" className="md:col-span-1 relative h-[300px] md:h-full group overflow-hidden cursor-pointer block">
                         <Image
                             src="https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=1500&auto=format&fit=crop"
                             alt="Mens Collection"
@@ -22,13 +23,13 @@ export function SeasonalPromoGrid() {
                             <p className="text-slate-200 mt-2 font-medium">Streetwear Collection '25</p>
                             <Button variant="secondary" className="w-fit mt-4">Explore</Button>
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Right Column Split */}
                     <div className="md:col-span-2 grid grid-rows-2 gap-2 h-[500px] md:h-full">
 
                         {/* Top Right */}
-                        <div className="relative group overflow-hidden cursor-pointer">
+                        <Link href="/products?category=fragrances" className="relative group overflow-hidden cursor-pointer block h-full">
                             <Image
                                 src="https://images.unsplash.com/photo-1560243563-062bfc001d68?q=80&w=1500&auto=format&fit=crop"
                                 alt="Summer Vibe"
@@ -41,11 +42,11 @@ export function SeasonalPromoGrid() {
                                     <p className="text-white text-lg font-bold mt-1">FLAT 50% OFF</p>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
 
                         {/* Bottom Split */}
                         <div className="grid grid-cols-2 gap-2">
-                            <div className="relative group overflow-hidden cursor-pointer">
+                            <Link href="/products?category=mens-watches" className="relative group overflow-hidden cursor-pointer block">
                                 <Image
                                     src="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop"
                                     alt="Accessories"
@@ -55,8 +56,8 @@ export function SeasonalPromoGrid() {
                                 <div className="absolute bottom-4 left-4">
                                     <span className="bg-white text-black px-3 py-1 text-sm font-bold uppercase tracking-widest">Watches</span>
                                 </div>
-                            </div>
-                            <div className="relative group overflow-hidden cursor-pointer">
+                            </Link>
+                            <Link href="/products?category=mens-shoes" className="relative group overflow-hidden cursor-pointer block">
                                 <Image
                                     src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop"
                                     alt="Footwear"
@@ -66,7 +67,7 @@ export function SeasonalPromoGrid() {
                                 <div className="absolute bottom-4 left-4">
                                     <span className="bg-white text-black px-3 py-1 text-sm font-bold uppercase tracking-widest">Sneakers</span>
                                 </div>
-                            </div>
+                            </Link>
                         </div>
 
                     </div>

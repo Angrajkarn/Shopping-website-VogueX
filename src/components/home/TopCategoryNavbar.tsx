@@ -7,7 +7,8 @@ import { motion } from "framer-motion"
 const categories = [
     { name: "Top Offers", icon: "https://cdn.dummyjson.com/product-images/groceries/apple/thumbnail.webp" },
     { name: "Mobiles", icon: "https://cdn.dummyjson.com/product-images/smartphones/iphone-5s/thumbnail.webp" },
-    { name: "Fashion", icon: "https://cdn.dummyjson.com/product-images/mens-shirts/blue-&-black-check-shirt/thumbnail.webp" },
+    { name: "Men", icon: "https://cdn.dummyjson.com/product-images/mens-shirts/blue-&-black-check-shirt/thumbnail.webp" },
+    { name: "Women", icon: "https://img.freepik.com/free-photo/portrait-young-stylish-girl-model-casual-summer-clothes-brown-hat-with-natural-makeup-isolated_158538-8586.jpg" },
     { name: "Electronics", icon: "https://cdn.dummyjson.com/product-images/laptops/apple-macbook-pro-14-inch-space-grey/thumbnail.webp" },
     { name: "Home & Furniture", icon: "https://cdn.dummyjson.com/product-images/furniture/annibale-colombo-bed/thumbnail.webp" },
     { name: "Appliances", icon: "https://cdn.dummyjson.com/product-images/kitchen-accessories/bamboo-spatula/thumbnail.webp" },

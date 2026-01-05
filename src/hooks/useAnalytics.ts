@@ -21,18 +21,28 @@ export function useAnalytics() {
 
         // Get or Create Anonymous Session ID
         try {
-            let sid = sessionStorage.getItem('analytics-session-id')
+            let sid = localStorage.getItem('analytics-session-id') // Changed to localStorage for persistence across tabs
+            if (!sid) {
+                // If not in local, check session just in case
+                sid = sessionStorage.getItem('analytics-session-id')
+            }
+
             if (!sid) {
                 sid = Math.random().toString(36).substring(2) + Date.now().toString(36)
-                sessionStorage.setItem('analytics-session-id', sid)
+                localStorage.setItem('analytics-session-id', sid)
             }
+
+            // Sync session storage
+            sessionStorage.setItem('analytics-session-id', sid)
+
+            console.log("Analytics: Initialized with Session ID:", sid)
             setSessionId(sid)
         } catch (e) {
             console.error("Error setting session ID:", e)
         }
     }, [])
 
-    const track = (type: 'VIEW' | 'HOVER' | 'SEARCH' | 'CART_ADD' | 'PURCHASE', data: { product_id?: string | number, metadata?: any } = {}) => {
+    const track = (type: 'VIEW' | 'HOVER' | 'SEARCH' | 'CART_ADD' | 'PURCHASE' | 'EXIT', data: { product_id?: string | number, metadata?: any } = {}) => {
         // Don't track if session ID isn't ready yet (slight race condition on mount)
         if (!sessionId) return
 

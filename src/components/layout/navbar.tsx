@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/lib/store"
 import { MegaMenu } from "./MegaMenu"
 import { UserMenu } from "./UserMenu"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { SearchModal } from "./SearchModal"
 
 const navItems = [
@@ -59,9 +60,37 @@ export function Navbar() {
         >
             <div className="container mx-auto px-4 h-16 flex items-center justify-between relative z-50">
                 {/* Mobile Menu */}
-                <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                </Button>
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="md:hidden">
+                            <Menu className="h-5 w-5" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                        <SheetHeader>
+                            <SheetTitle className="text-left text-2xl font-bold">VOGUE<span className="text-primary/50">X</span></SheetTitle>
+                        </SheetHeader>
+                        <nav className="flex flex-col gap-4 mt-8">
+                            {navItems.map((item) => (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={cn(
+                                        "text-lg font-medium transition-colors hover:text-primary py-2",
+                                        pathname === item.href
+                                            ? "text-primary"
+                                            : "text-muted-foreground"
+                                    )}
+                                >
+                                    {item.name}
+                                </Link>
+                            ))}
+                        </nav>
+                        <div className="absolute bottom-10 left-6 text-sm text-muted-foreground">
+                            <p>© 2024 VogueX Fashion</p>
+                        </div>
+                    </SheetContent>
+                </Sheet>
 
                 {/* Logo */}
                 <Link href="/" className="text-2xl font-bold tracking-tighter">

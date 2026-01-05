@@ -3,57 +3,41 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Zap, Clock, ChevronRight, ChevronLeft, Flame } from "lucide-react"
+import { Zap, ChevronRight, ChevronLeft, Flame } from "lucide-react"
 import { motion } from "framer-motion"
-
-const deals = [
-    {
-        id: 1,
-        title: "Sony Noise Cancelling Headphones",
-        price: "₹14,990",
-        original: "₹24,990",
-        claimed: 87,
-        image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&q=80"
-    },
-    {
-        id: 2,
-        title: "Samsung Gaming Monitor 27\"",
-        price: "₹18,499",
-        original: "₹32,000",
-        claimed: 65,
-        image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&q=80"
-    },
-    {
-        id: 3,
-        title: "Logitech Mechanical Keyboard",
-        price: "₹8,999",
-        original: "₹12,499",
-        claimed: 92,
-        image: "https://images.unsplash.com/photo-1595225476474-87563907a212?w=500&q=80"
-    },
-    {
-        id: 4,
-        title: "GoPro Hero 11 Black",
-        price: "₹34,990",
-        original: "₹45,000",
-        claimed: 45,
-        image: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=500&q=80"
-    },
-    {
-        id: 5,
-        title: "Instant Pot Duo 7-in-1",
-        price: "₹7,999",
-        original: "₹11,999",
-        claimed: 78,
-        image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&q=80"
-    }
-]
+import { api } from "@/lib/api"
+import Link from "next/link"
 
 export function LightningDeals() {
+    const [deals, setDeals] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
     const [timeLeft, setTimeLeft] = useState({ h: 4, m: 23, s: 15 })
     const scrollContainerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
+        // Fetch Real Deals (Simulated by fetching 'Electronics' or random items)
+        const fetchDeals = async () => {
+            try {
+                // Fetching distinct items to simulate "Deals"
+                const res = await api.getProducts("Electronics", 10)
+                const products = res.products.map(p => ({
+                    id: p.id,
+                    title: p.title,
+                    price: `₹${p.price.toLocaleString()}`,
+                    original: `₹${(p.price * 1.4).toLocaleString()}`, // Mock original price
+                    claimed: Math.floor(Math.random() * 80) + 10, // Mock claimed %
+                    image: p.thumbnail,
+                    category: p.category
+                }))
+                setDeals(products)
+            } catch (err) {
+                console.error("Failed to fetch deals", err)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchDeals()
+
         const timer = setInterval(() => {
             setTimeLeft(prev => {
                 if (prev.s > 0) return { ...prev, s: prev.s - 1 }
@@ -77,6 +61,8 @@ export function LightningDeals() {
         }
     }
 
+    if (loading) return null // Or skeleton
+
     return (
         <section className="py-8 bg-gradient-to-r from-yellow-50 to-orange-50 my-4 border-y border-orange-100">
             <div className="container mx-auto px-4">
@@ -93,15 +79,20 @@ export function LightningDeals() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
-                        <p className="text-xs font-bold text-slate-400 uppercase mr-1">Ends in</p>
-                        <div className="flex items-center gap-1 font-mono font-bold text-lg text-slate-800">
-                            <span className="bg-slate-800 text-white px-1.5 rounded">{String(timeLeft.h).padStart(2, '0')}</span>
-                            <span>:</span>
-                            <span className="bg-slate-800 text-white px-1.5 rounded">{String(timeLeft.m).padStart(2, '0')}</span>
-                            <span>:</span>
-                            <span className="bg-red-500 text-white px-1.5 rounded animate-pulse">{String(timeLeft.s).padStart(2, '0')}</span>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
+                            <p className="text-xs font-bold text-slate-400 uppercase mr-1">Ends in</p>
+                            <div className="flex items-center gap-1 font-mono font-bold text-lg text-slate-800">
+                                <span className="bg-slate-800 text-white px-1.5 rounded">{String(timeLeft.h).padStart(2, '0')}</span>
+                                <span>:</span>
+                                <span className="bg-slate-800 text-white px-1.5 rounded">{String(timeLeft.m).padStart(2, '0')}</span>
+                                <span>:</span>
+                                <span className="bg-red-500 text-white px-1.5 rounded animate-pulse">{String(timeLeft.s).padStart(2, '0')}</span>
+                            </div>
                         </div>
+                        <Button variant="default" className="hidden md:flex bg-slate-900 text-white" asChild>
+                            <Link href="/products?category=Electronics">View All Deals</Link>
+                        </Button>
                     </div>
                 </div>
 
@@ -122,14 +113,14 @@ export function LightningDeals() {
                                     {deal.claimed}% Claimed
                                 </div>
 
-                                <div className="relative aspect-square mb-4 bg-slate-50 rounded-lg overflow-hidden">
+                                <Link href={`/products/${deal.id}`} className="block relative aspect-square mb-4 bg-slate-50 rounded-lg overflow-hidden cursor-pointer">
                                     <Image
                                         src={deal.image}
                                         alt={deal.title}
                                         fill
                                         className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
                                     />
-                                </div>
+                                </Link>
 
                                 <h3 className="font-bold text-slate-900 line-clamp-2 min-h-[48px] mb-2 leading-tight">
                                     {deal.title}
@@ -154,11 +145,23 @@ export function LightningDeals() {
                                     </div>
                                 </div>
 
-                                <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold">
-                                    Add to Cart
+                                <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold" asChild>
+                                    <Link href={`/products/${deal.id}`}>View Deal</Link>
                                 </Button>
                             </motion.div>
                         ))}
+                        {/* View All Card at End of Carousel */}
+                        <motion.div
+                            whileHover={{ scale: 0.98 }}
+                            className="min-w-[200px] flex items-center justify-center bg-white rounded-xl shadow-sm border-2 border-dashed border-slate-300 p-4 shrink-0 snap-center cursor-pointer hover:border-slate-900 group/viewall"
+                        >
+                            <Link href="/products?category=Electronics" className="flex flex-col items-center gap-2 text-center">
+                                <div className="bg-slate-100 p-4 rounded-full group-hover/viewall:bg-slate-900 transition-colors">
+                                    <ChevronRight className="w-6 h-6 text-slate-900 group-hover/viewall:text-white" />
+                                </div>
+                                <span className="font-bold text-slate-900">View All Deals</span>
+                            </Link>
+                        </motion.div>
                     </div>
 
                     {/* Nav Buttons */}
@@ -177,6 +180,12 @@ export function LightningDeals() {
                         onClick={() => scroll('right')}
                     >
                         <ChevronRight className="w-6 h-6" />
+                    </Button>
+                </div>
+
+                <div className="mt-6 md:hidden text-center">
+                    <Button variant="outline" className="w-full" asChild>
+                        <Link href="/products?category=Electronics">View All Lightning Deals</Link>
                     </Button>
                 </div>
 
