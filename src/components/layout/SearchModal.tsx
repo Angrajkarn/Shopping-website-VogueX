@@ -83,6 +83,20 @@ export function SearchModal({ children }: { children: React.ReactNode }) {
         }, 2000)
     }
 
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    // ... (existing effects)
+
+    // ... (handlers)
+
+    if (!mounted) {
+        return <>{children}</>
+    }
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

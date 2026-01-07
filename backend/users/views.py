@@ -418,3 +418,13 @@ class NotificationListView(generics.ListAPIView):
             return Response({"status": "success"})
 
         return Response({"error": "Invalid request"}, status=400)
+
+class NewsletterSubscriptionView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        email = request.data.get('email')
+        if email:
+            print(f"Newsletter Subscription for: {email}")
+            return Response({"message": "Subscribed successfully"}, status=status.HTTP_200_OK)
+        return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)

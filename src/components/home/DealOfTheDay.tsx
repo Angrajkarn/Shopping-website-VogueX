@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Clock, ChevronRight, ChevronLeft } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { formatPrice } from "@/lib/utils"
 
 const deals = [
     {
@@ -100,18 +101,31 @@ export function DealOfTheDay() {
                                 whileHover={{ y: -5 }}
                                 className="min-w-[200px] md:min-w-[240px] bg-white p-3 rounded-xl border hover:shadow-lg transition-all cursor-pointer snap-start group shrink-0"
                             >
-                                <div className="relative aspect-square mb-3 bg-gray-100 rounded-lg overflow-hidden">
-                                    <Image src={deal.image} alt={deal.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                                    <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm">
-                                        {deal.discount}
+                                <motion.div
+                                    key={deal.id}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: i * 0.1 }}
+                                    whileHover={{ y: -5 }}
+                                    className="min-w-[200px] md:min-w-[240px] bg-white p-3 rounded-xl border hover:shadow-lg transition-all cursor-pointer snap-start group shrink-0 relative"
+                                >
+                                    <Link href={`/products/${deal.id}`} className="absolute inset-0 z-0" aria-label={deal.name} />
+
+                                    <div className="relative z-10 aspect-square mb-3 bg-gray-100 rounded-lg overflow-hidden pointer-events-none">
+                                        <Image src={deal.image} alt={deal.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm">
+                                            {deal.discount}
+                                        </div>
                                     </div>
-                                </div>
-                                <h3 className="font-medium text-slate-900 truncate text-sm">{deal.name}</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-green-600 font-bold text-lg">₹{deal.price.toLocaleString()}</span>
-                                    <span className="text-slate-400 text-xs line-through">₹{deal.originalPrice.toLocaleString()}</span>
-                                </div>
-                                <p className="text-[10px] text-slate-500 mt-2">Ends in {deal.timeLeft}</p>
+                                    <div className="relative z-10 pointer-events-none">
+                                        <h3 className="font-medium text-slate-900 truncate text-sm">{deal.name}</h3>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-green-600 font-bold text-lg">{formatPrice(deal.price)}</span>
+                                            <span className="text-slate-400 text-xs line-through">{formatPrice(deal.originalPrice)}</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 mt-2">Ends in {deal.timeLeft}</p>
+                                    </div>
+                                </motion.div>
                             </motion.div>
                         ))}
 

@@ -6,6 +6,7 @@ import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Check, Plus, Loader2 } from "lucide-react"
 import { useCartStore } from "@/lib/store"
+import { formatPrice } from "@/lib/utils"
 import { toast } from "sonner"
 import Image from "next/image"
 
@@ -29,16 +30,19 @@ export function ProductBundle({ mainProduct }: ProductBundleProps) {
     useEffect(() => {
         const fetchBundleItems = async () => {
             try {
-                // 1. Try to find "Frequently Bought Together" using simple Category match for now
-                // (In future, this can be an advanced API call)
+                // Smart Bundle Logic:
+                // 1. Get Category
                 const categoryTerm = typeof mainProduct.category === 'string'
                     ? mainProduct.category
                     : (mainProduct.category?.slug || mainProduct.category?.name || "clothing")
 
-                const data = await api.getProducts(categoryTerm, 4) // Fetch a few
+                // 2. Fetch 8 items to ensure variety
+                const data = await api.getProducts(categoryTerm, 8)
+
+                // 3. Filter out current product and maybe same-name variants
                 const others = (data.products || [])
-                    .filter((p: Product) => p.id !== mainProduct.id)
-                    .slice(0, 1) // Take top 1 for a "Perfect Pair" (Total 2 items) 
+                    .filter((p: Product) => p.id !== mainProduct.id && !p.title.includes(mainProduct.name))
+                    .slice(0, 2) // Take top 2 for a "Trio Bundle" (Main + 2)
 
                 setBundleProducts(others)
                 // Select all by default
@@ -51,7 +55,7 @@ export function ProductBundle({ mainProduct }: ProductBundleProps) {
         }
 
         fetchBundleItems()
-    }, [mainProduct.id])
+    }, [mainProduct.id, mainProduct.category, mainProduct.name])
 
     if (loading || bundleProducts.length === 0) return null
 
@@ -123,22 +127,22 @@ export function ProductBundle({ mainProduct }: ProductBundleProps) {
                         </div>
                     </div>
 
-                    {/* Plus Sign */}
-                    <div className="mx-2 text-gray-400">
-                        <Plus className="h-6 w-6" />
-                    </div>
-
-                    {/* Bundle Items */}
+                    {/* Bundle Items Chain */}
                     {bundleProducts.map((p) => (
-                        <div key={p.id} className="relative cursor-pointer" onClick={() => toggleSelection(p.id)}>
-                            <div className={`w-24 h-24 bg-white rounded-lg border p-2 relative transition-all ${selectedIds.includes(p.id) ? 'ring-2 ring-indigo-500' : 'opacity-75 grayscale'}`}>
-                                <Image src={p.images[0]?.url || ""} fill alt={p.name} className="object-contain" />
+                        <div key={p.id} className="flex items-center">
+                            <div className="mx-1 text-gray-300">
+                                <Plus className="h-5 w-5" />
                             </div>
-                            {selectedIds.includes(p.id) && (
-                                <div className="absolute -top-2 -right-2 bg-indigo-600 text-white rounded-full p-0.5">
-                                    <Check className="h-3 w-3" />
+                            <div className="relative cursor-pointer group" onClick={() => toggleSelection(p.id)}>
+                                <div className={`w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl border p-2 relative transition-all duration-300 ${selectedIds.includes(p.id) ? 'ring-2 ring-indigo-500 shadow-md scale-105' : 'opacity-60 grayscale scale-95'}`}>
+                                    <Image src={p.images[0]?.url || ""} fill alt={p.name} className="object-contain" />
                                 </div>
-                            )}
+                                <div className={`absolute -top-2 -right-2 transition-transform duration-300 ${selectedIds.includes(p.id) ? 'scale-100' : 'scale-0'}`}>
+                                    <div className="bg-indigo-600 text-white rounded-full p-1 shadow-sm">
+                                        <Check className="h-3 w-3" />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -148,10 +152,10 @@ export function ProductBundle({ mainProduct }: ProductBundleProps) {
                     <div className="space-y-1">
                         <div className="text-sm text-gray-500">Total Price for {selectedIds.length + 1} items:</div>
                         <div className="flex items-baseline justify-center md:justify-start gap-3">
-                            <span className="text-2xl font-bold text-gray-900">₹{finalPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                            <span className="text-sm text-gray-500 line-through">₹{totalBundlePrice.toLocaleString()}</span>
+                            <span className="text-2xl font-bold text-gray-900">{formatPrice(finalPrice)}</span>
+                            <span className="text-sm text-gray-500 line-through">{formatPrice(totalBundlePrice)}</span>
                             <span className="text-sm font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded">
-                                Save ₹{savedAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                Save {formatPrice(savedAmount)}
                             </span>
                         </div>
                     </div>
@@ -176,7 +180,7 @@ export function ProductBundle({ mainProduct }: ProductBundleProps) {
                             {selectedIds.includes(p.id) && <Check className="h-3 w-3" />}
                         </div>
                         <span>{p.name}</span>
-                        <span className="font-bold text-gray-900">₹{parseFloat(p.variants[0]?.price_selling || "0").toLocaleString()}</span>
+                        <span className="font-bold text-gray-900">{formatPrice(parseFloat(p.variants[0]?.price_selling || "0"))}</span>
                     </div>
                 ))}
             </div>

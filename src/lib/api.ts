@@ -49,12 +49,37 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
 export const api = {
     // Products (Backend)
-    async getProducts(category?: string, limit = 20, skip = 0): Promise<ProductResponse> {
-        let url = `${BACKEND_URL}/products/?limit=${limit}&offset=${skip}`
-        if (category) {
-            // Use strict category filter if backend supports it (it does now)
-            url += `&category=${encodeURIComponent(category)}`
+    async getProducts(
+        category?: string,
+        limit = 20,
+        skip = 0,
+        filters?: {
+            gender?: string[]
+            color?: string
+            minPrice?: number
+            maxPrice?: number
+            sortBy?: string
         }
+    ): Promise<ProductResponse> {
+        // Build query string
+        const params = new URLSearchParams()
+        params.append("limit", limit.toString())
+        params.append("offset", skip.toString())
+
+        if (category) params.append("category", category)
+
+        if (filters) {
+            if (filters.gender && filters.gender.length > 0) {
+                // Assuming backend accepts comma separated or multiple keys. using comma for now
+                params.append("gender", filters.gender.join(","))
+            }
+            if (filters.color) params.append("color", filters.color)
+            if (filters.minPrice !== undefined) params.append("min_price", filters.minPrice.toString())
+            if (filters.maxPrice !== undefined) params.append("max_price", filters.maxPrice.toString())
+            if (filters.sortBy) params.append("ordering", filters.sortBy) // Django ordering param
+        }
+
+        const url = `${BACKEND_URL}/products/?${params.toString()}`
 
         const res = await fetch(url)
         if (!res.ok) {
@@ -117,6 +142,19 @@ export const api = {
         return { products, total, skip, limit }
     },
 
+    async getFilterOptions(category?: string, subcategory?: string) {
+        let url = `${BACKEND_URL}/products/filters/`
+        const params = new URLSearchParams()
+        if (category) params.append('category', category)
+        if (subcategory) params.append('subcategory', subcategory)
+
+        if (params.toString()) url += `?${params.toString()}`
+
+        const res = await fetch(url)
+        if (!res.ok) throw new Error("Failed to fetch filter options")
+        return res.json()
+    },
+
     async getCategories(): Promise<string[]> {
         const res = await fetch(`${BASE_URL}/products/categories`)
         if (!res.ok) {
@@ -146,6 +184,20 @@ export const api = {
         const res = await fetch(`${BACKEND_URL}/products/${slug}/`)
         if (!res.ok) {
             throw new Error("Failed to fetch product")
+        }
+        return res.json()
+    },
+
+    async scrapeProduct(url: string) {
+        const res = await fetch(`${BACKEND_URL}/products/scrape/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        })
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}))
+            throw new Error(err.error || "Failed to scrape product")
         }
         return res.json()
     },
@@ -676,6 +728,18 @@ export const api = {
         }
     },
 
+    async trackPageExit(data: any) {
+        return this.trackEvent({
+            interaction_type: 'PAGE_EXIT',
+            product_id: data.product_id,
+            metadata: {
+                duration_seconds: data.duration_seconds,
+                scroll_depth_percent: data.scroll_depth_percent,
+                ...data
+            }
+        })
+    },
+
     async getHistory(session_id?: string, token?: string) {
         let url = `${BACKEND_URL}/analytics/history/`
         if (session_id) url += `?session_id=${session_id}`
@@ -698,6 +762,16 @@ export const api = {
         const res = await fetch(url, { headers })
         if (!res.ok) return { term: "", products: [] }
         return res.json()
+    },
+
+    async getPersonalizedFeed(category?: string, token?: string) {
+        const params = new URLSearchParams()
+        if (category) params.append("category", category)
+
+        // We'll use the 'products' endpoint with category filter as a proxy for "AI Feed" 
+        // since we don't have a dedicated ML backend service yet.
+        // This effectively returns "More like [Category]"
+        return this.getProducts(params.toString())
     },
 
     async askStylist(message: string, session_id?: string, token?: string) {
@@ -795,6 +869,19 @@ export const api = {
             },
             body: JSON.stringify({ is_active: isActive })
         })
+        return res.json()
+    },
+
+    async processVoiceCommand(command: string) {
+        const url = `${BACKEND_URL}/products/voice/`
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ command })
+        })
+        if (!res.ok) throw new Error("Voice connect failed")
         return res.json()
     }
 }

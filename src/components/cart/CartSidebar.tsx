@@ -1,6 +1,7 @@
 "use client"
 
 import { useCartStore } from "@/lib/store"
+import { formatPrice } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { X, Minus, Plus, ShoppingBag } from "lucide-react"
 import Image from "next/image"
@@ -71,7 +72,7 @@ export function CartSidebar() {
                                         <div className="flex-1">
                                             <div className="flex justify-between mb-1">
                                                 <h3 className="font-medium line-clamp-1">{item.name}</h3>
-                                                <p className="font-bold">${(item.price * item.quantity).toFixed(2)}</p>
+                                                <p className="font-bold">{formatPrice(item.price * item.quantity)}</p>
                                             </div>
                                             <p className="text-xs text-muted-foreground mb-2">
                                                 {item.color} / {item.size}
@@ -109,7 +110,7 @@ export function CartSidebar() {
                             <div className="p-4 border-t bg-accent/5 space-y-4">
                                 <div className="flex justify-between text-lg font-bold">
                                     <span>Total</span>
-                                    <span>${total.toFixed(2)}</span>
+                                    <span>{formatPrice(total)}</span>
                                 </div>
                                 <Button
                                     className="w-full"

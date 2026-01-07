@@ -8,6 +8,8 @@ class UserInteraction(models.Model):
         ('SEARCH', 'Search Query'),
         ('CART_ADD', 'Add to Cart'),
         ('PURCHASE', 'Purchase'),
+        ('TIME_30S', 'Dwell Time > 30s'),
+        ('DEEP_SCROLL', 'Deep Scroll > 60%'),
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)

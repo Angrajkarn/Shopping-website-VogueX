@@ -4,15 +4,17 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { Clock } from "lucide-react"
+import { formatPrice } from "@/lib/utils"
 
 const deals = [
-    { id: 1, name: "Zara Summer Dress", price: "₹1,299", oldPrice: "₹2,599", discount: "50% OFF", image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500&q=80" },
-    { id: 2, name: "Urban Jacket", price: "₹2,499", oldPrice: "₹5,999", discount: "58% OFF", image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&q=80" },
-    { id: 3, name: "Nike Air Max", price: "₹4,999", oldPrice: "₹8,999", discount: "45% OFF", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80" },
-    { id: 4, name: "Denim Jacket", price: "₹1,499", oldPrice: "₹2,999", discount: "50% OFF", image: "https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?w=500&q=80" },
-    { id: 5, name: "Classic Watch", price: "₹999", oldPrice: "₹3,999", discount: "75% OFF", image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=500&q=80" },
-    { id: 6, name: "Leather Bag", price: "₹3,499", oldPrice: "₹6,999", discount: "50% OFF", image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&q=80" },
+    { id: 1, name: "Zara Summer Dress", price: 1299, oldPrice: 2599, discount: "50% OFF", image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500&q=80" },
+    { id: 2, name: "Urban Jacket", price: 2499, oldPrice: 5999, discount: "58% OFF", image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&q=80" },
+    { id: 3, name: "Nike Air Max", price: 4999, oldPrice: 8999, discount: "45% OFF", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80" },
+    { id: 4, name: "Denim Jacket", price: 1499, oldPrice: 2999, discount: "50% OFF", image: "https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?w=500&q=80" },
+    { id: 5, name: "Classic Watch", price: 999, oldPrice: 3999, discount: "75% OFF", image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=500&q=80" },
+    { id: 6, name: "Leather Bag", price: 3499, oldPrice: 6999, discount: "50% OFF", image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&q=80" },
 ]
 
 export function HourlyFashionDeals() {
@@ -59,17 +61,27 @@ export function HourlyFashionDeals() {
                             whileHover={{ y: -4 }}
                             className="bg-white rounded-lg p-2 border border-slate-100 hover:shadow-md cursor-pointer group"
                         >
-                            <div className="relative aspect-[3/4] mb-2 rounded overflow-hidden bg-slate-100">
-                                <Image src={item.image} alt={item.name} fill className="object-cover" />
-                                <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm">
-                                    {item.discount}
+                            <motion.div
+                                key={item.id}
+                                whileHover={{ y: -4 }}
+                                className="bg-white rounded-lg p-2 border border-slate-100 hover:shadow-md cursor-pointer group relative"
+                            >
+                                <Link href={`/products/${item.id}`} className="absolute inset-0 z-0" aria-label={item.name} />
+
+                                <div className="relative z-10 aspect-[3/4] mb-2 rounded overflow-hidden bg-slate-100 pointer-events-none">
+                                    <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                    <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm">
+                                        {item.discount}
+                                    </div>
                                 </div>
-                            </div>
-                            <h3 className="text-sm font-medium text-slate-900 truncate">{item.name}</h3>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="text-base font-bold text-slate-900">{item.price}</span>
-                                <span className="text-xs text-slate-400 line-through">{item.oldPrice}</span>
-                            </div>
+                                <div className="relative z-10 pointer-events-none">
+                                    <h3 className="text-sm font-medium text-slate-900 truncate">{item.name}</h3>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-base font-bold text-slate-900">{formatPrice(item.price)}</span>
+                                        <span className="text-xs text-slate-400 line-through">{formatPrice(item.oldPrice)}</span>
+                                    </div>
+                                </div>
+                            </motion.div>
                         </motion.div>
                     ))}
                 </div>

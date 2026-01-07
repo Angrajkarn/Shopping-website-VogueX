@@ -3,6 +3,7 @@
 import { useCartStore } from "@/lib/store"
 import { useAuthStore } from "@/lib/auth-store"
 import { Button } from "@/components/ui/button"
+import { formatPrice } from "@/lib/utils"
 import Image from "next/image"
 import { Minus, Plus, X } from "lucide-react"
 
@@ -44,9 +45,9 @@ export function OrderSummary({ onContinue }: OrderSummaryProps) {
                             </p>
 
                             <div className="flex items-center gap-2 mt-2">
-                                <span className="font-bold text-lg">₹{item.price.toLocaleString()}</span>
+                                <span className="font-bold text-lg">{formatPrice(item.price)}</span>
                                 <span className="text-xs text-green-600 font-medium">10% Off</span>
-                                <span className="text-xs text-gray-400 line-through">₹{Math.round(item.price * 1.1).toLocaleString()}</span>
+                                <span className="text-xs text-gray-400 line-through">{formatPrice(Math.round(item.price * 1.1))}</span>
                             </div>
 
                             <div className="flex items-center justify-between mt-3">
@@ -80,7 +81,7 @@ export function OrderSummary({ onContinue }: OrderSummaryProps) {
                         <div className="text-xs text-gray-500">
                             Delivery by <span className="font-medium text-black">Sat, Aug 19</span>
                             <br />
-                            <span className="text-green-600">Free</span> <span className="line-through text-gray-400">₹40</span>
+                            <span className="text-green-600">Free</span> <span className="line-through text-gray-400">{formatPrice(40)}</span>
                         </div>
                     </div>
                 ))}

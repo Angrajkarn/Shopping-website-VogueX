@@ -11,6 +11,7 @@ import { useCartStore } from "@/lib/store"
 import { useAuthStore } from "@/lib/auth-store"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
+import { formatPrice } from "@/lib/utils"
 
 // Add declaration for Razorpay global
 declare global {
@@ -247,12 +248,12 @@ export function PaymentOptions({ onPaymentComplete, selectedAddress }: PaymentOp
                 <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                         <div>Price ({items.length} item{items.length > 1 ? 's' : ''})</div>
-                        <div>₹{total.toLocaleString()}</div>
+                        <div>{formatPrice(total)}</div>
                     </div>
                     {isGiftCardApplied && (
                         <div className="flex justify-between text-green-600">
                             <div>Gift Card Discount</div>
-                            <div>- ₹{Math.min(giftCardBalance, total).toLocaleString()}</div>
+                            <div>- {formatPrice(Math.min(giftCardBalance, total))}</div>
                         </div>
                     )}
                     <div className="flex justify-between">
@@ -264,12 +265,12 @@ export function PaymentOptions({ onPaymentComplete, selectedAddress }: PaymentOp
 
                     <div className="flex justify-between font-bold text-lg">
                         <div>Total Amount</div>
-                        <div>₹{effectiveTotal.toLocaleString()}</div>
+                        <div>{formatPrice(effectiveTotal)}</div>
                     </div>
                 </div>
                 {isGiftCardApplied && (
                     <div className="mt-3 text-green-600 font-bold text-sm">
-                        You will save ₹{Math.min(giftCardBalance, total).toLocaleString()} on this order
+                        You will save {formatPrice(Math.min(giftCardBalance, total))} on this order
                     </div>
                 )}
             </div>
@@ -287,7 +288,7 @@ export function PaymentOptions({ onPaymentComplete, selectedAddress }: PaymentOp
                                     <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/payment-method_69e7ec.svg" alt="UPI" className="h-4" />
                                 </div>
                             </Label>
-                            <p className="text-xs text-green-600 mt-0.5">Get upto ₹15 cashback • 2 offers available</p>
+                            <p className="text-xs text-green-600 mt-0.5">Get upto {formatPrice(15)} cashback • 2 offers available</p>
 
                             {paymentMethod === 'upi' && (
                                 <div className="mt-4 pl-0 max-w-sm">
@@ -317,7 +318,7 @@ export function PaymentOptions({ onPaymentComplete, selectedAddress }: PaymentOp
                                             Google Pay, PhonePe, Paytm and more
                                         </div>
                                         <Button onClick={handlePayment} disabled={isProcessing} className="w-full mt-2 bg-orange-500 hover:bg-orange-600 h-12 uppercase font-bold shadow-sm">
-                                            {isProcessing ? "Processing..." : `Pay ₹${effectiveTotal.toLocaleString()}`}
+                                            {isProcessing ? "Processing..." : `Pay ${formatPrice(effectiveTotal)}`}
                                         </Button>
                                     </div>
                                 </div>
@@ -336,7 +337,7 @@ export function PaymentOptions({ onPaymentComplete, selectedAddress }: PaymentOp
                                 Credit / Debit / ATM Card
                             </Label>
                             <p className="text-xs text-gray-500 mt-1">Add and secure cards as per RBI guidelines</p>
-                            <p className="text-xs text-green-600">Save upto ₹603 • 3 offers available</p>
+                            <p className="text-xs text-green-600">Save upto {formatPrice(603)} • 3 offers available</p>
 
                             {paymentMethod === 'card' && (
                                 <div className="mt-4 max-w-sm space-y-4">
@@ -346,7 +347,7 @@ export function PaymentOptions({ onPaymentComplete, selectedAddress }: PaymentOp
                                         <Input placeholder="CVV" className="bg-white" />
                                     </div>
                                     <Button onClick={handlePayment} disabled={isProcessing} className="w-full bg-orange-500 hover:bg-orange-600 h-12 uppercase font-bold shadow-sm">
-                                        {isProcessing ? "Processing..." : `Pay ₹${effectiveTotal.toLocaleString()}`}
+                                        {isProcessing ? "Processing..." : `Pay ${formatPrice(effectiveTotal)}`}
                                     </Button>
                                 </div>
                             )}
@@ -416,7 +417,7 @@ export function PaymentOptions({ onPaymentComplete, selectedAddress }: PaymentOp
                                         const res = await api.validateGiftCard(token || "", inputCode)
                                         // Update Global Store
                                         applyGiftCard(inputCode, parseFloat(res.current_balance))
-                                        toast.success(`Gift Card Applied! Balance: ₹${res.current_balance}`)
+                                        toast.success(`Gift Card Applied! Balance: ${formatPrice(parseFloat(res.current_balance))}`)
                                     } catch (e: any) {
                                         toast.error(e.message)
                                     } finally {
@@ -432,7 +433,7 @@ export function PaymentOptions({ onPaymentComplete, selectedAddress }: PaymentOp
                         <div className="flex items-center justify-between bg-green-50 border border-green-200 p-3 rounded">
                             <div>
                                 <p className="font-bold text-green-700">Gift Card Applied</p>
-                                <p className="text-xs text-green-600">Code: {giftCardCode} • Balance Used: ₹{Math.min(giftCardBalance, total)}</p>
+                                <p className="text-xs text-green-600">Code: {giftCardCode} • Balance Used: {formatPrice(Math.min(giftCardBalance, total))}</p>
                             </div>
                             <Button
                                 variant="ghost"

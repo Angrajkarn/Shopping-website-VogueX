@@ -26,6 +26,12 @@ function ProductListingContent({ initialCategory }: ProductListingProps) {
     // Prioritize search params, fallback to initialCategory
     const category = searchParams.get("category") || initialCategory
 
+    // Read Filters from URL
+    const gender = searchParams.get("gender")?.split(",")
+    const color = searchParams.get("color") || undefined
+    const minPrice = searchParams.get("min_price") ? Number(searchParams.get("min_price")) : undefined
+    const maxPrice = searchParams.get("max_price") ? Number(searchParams.get("max_price")) : undefined
+
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [fetchingMore, setFetchingMore] = useState(false)
@@ -33,7 +39,7 @@ function ProductListingContent({ initialCategory }: ProductListingProps) {
     const [offset, setOffset] = useState(0)
     const [sortBy, setSortBy] = useState("featured")
 
-    // Reset when category changes
+    // Reset when any filter changes
     useEffect(() => {
         setProducts([])
         setOffset(0)
@@ -42,12 +48,20 @@ function ProductListingContent({ initialCategory }: ProductListingProps) {
 
         // Initial Fetch
         fetchProducts(0, true)
-    }, [category])
+    }, [category, searchParams.toString(), sortBy]) // Re-run when URL params change
 
     const fetchProducts = async (currentOffset: number, isInitial: boolean) => {
         try {
             const LIMIT = 40
-            const data = await getProducts(category || undefined, LIMIT, currentOffset)
+            const filters = {
+                gender,
+                color,
+                minPrice,
+                maxPrice,
+                sortBy: sortBy !== "featured" ? sortBy : undefined
+            }
+
+            const data = await getProducts(category || undefined, LIMIT, currentOffset, filters)
 
             if (data.products.length < LIMIT) {
                 setHasMore(false)

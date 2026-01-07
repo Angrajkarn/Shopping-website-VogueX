@@ -4,41 +4,80 @@ import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
 
+// Flipkart-style categories matching user request
 const categories = [
-    { name: "Top Offers", icon: "https://cdn.dummyjson.com/product-images/groceries/apple/thumbnail.webp" },
-    { name: "Mobiles", icon: "https://cdn.dummyjson.com/product-images/smartphones/iphone-5s/thumbnail.webp" },
-    { name: "Fashion", icon: "https://cdn.dummyjson.com/product-images/mens-shirts/blue-&-black-check-shirt/thumbnail.webp" },
-    { name: "Electronics", icon: "https://cdn.dummyjson.com/product-images/laptops/apple-macbook-pro-14-inch-space-grey/thumbnail.webp" },
-    { name: "Home & Furniture", icon: "https://cdn.dummyjson.com/product-images/furniture/annibale-colombo-bed/thumbnail.webp" },
-    { name: "Appliances", icon: "https://cdn.dummyjson.com/product-images/kitchen-accessories/bamboo-spatula/thumbnail.webp" },
-    { name: "Travel", icon: "https://cdn.dummyjson.com/product-images/vehicle/300-touring/thumbnail.webp" },
-    { name: "Beauty, Toys & More", icon: "https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/thumbnail.webp" },
-    { name: "Two Wheelers", icon: "https://cdn.dummyjson.com/product-images/motorcycle/generic-motorcycle/thumbnail.webp" },
+    {
+        name: "Top Offers",
+        slug: "deals",
+        icon: "https://img.icons8.com/3d-fluency/94/discount.png"
+    },
+    {
+        name: "Mobiles",
+        slug: "smartphones",
+        icon: "https://img.icons8.com/3d-fluency/94/smartphone.png"
+    },
+    {
+        name: "Fashion",
+        slug: "mens-shirts",
+        icon: "https://img.icons8.com/3d-fluency/94/clothes.png"
+    },
+    {
+        name: "Electronics",
+        slug: "laptops",
+        icon: "https://img.icons8.com/3d-fluency/94/laptop.png"
+    },
+    {
+        name: "Home & Furniture",
+        slug: "furniture",
+        icon: "https://img.icons8.com/3d-fluency/94/sofa.png"
+    },
+    {
+        name: "Appliances",
+        slug: "kitchen-accessories",
+        icon: "https://img.icons8.com/3d-fluency/94/washing-machine.png"
+    },
+    {
+        name: "Travel",
+        slug: "sunglasses",
+        icon: "https://img.icons8.com/3d-fluency/94/airplane-take-off.png"
+    },
+    {
+        name: "Beauty, Toys & More",
+        slug: "beauty",
+        icon: "https://img.icons8.com/3d-fluency/94/lipstick.png"
+    },
+    {
+        name: "Two Wheelers",
+        slug: "motorcycle",
+        icon: "https://img.icons8.com/3d-fluency/94/motorcycle.png"
+    },
 ]
 
 export function TopCategoryNavbar() {
     return (
-        <div className="bg-white border-b py-4 overflow-x-auto scrollbar-hide">
-            <div className="container mx-auto px-4 min-w-max">
-                <div className="flex items-center justify-between gap-8 md:gap-12">
+        <div className="bg-white border-b shadow-sm py-3 overflow-x-auto scrollbar-hide z-40 relative">
+            <div className="container mx-auto px-2 md:px-4 min-w-max">
+                <div className="flex items-start justify-between gap-6 md:gap-10">
                     {categories.map((cat, idx) => (
                         <Link
-                            href={`/products?category=${encodeURIComponent(cat.name)}`}
+                            href={`/shop?category=${encodeURIComponent(cat.slug)}`}
                             key={idx}
+                            className="group"
                         >
                             <motion.div
-                                whileHover={{ y: -5 }}
-                                className="flex flex-col items-center gap-2 cursor-pointer group"
+                                whileHover={{ y: -3 }}
+                                className="flex flex-col items-center gap-1.5 cursor-pointer"
                             >
-                                <div className="relative w-16 h-16 md:w-20 md:h-20 lg:w-[64px] lg:h-[64px]">
+                                <div className="relative w-14 h-14 md:w-[64px] md:h-[64px] overflow-hidden rounded-md transition-all">
                                     <Image
                                         src={cat.icon}
                                         alt={cat.name}
                                         fill
-                                        className="object-contain group-hover:scale-110 transition-transform duration-300"
+                                        className="object-contain group-hover:scale-105 transition-transform duration-300"
+                                        unoptimized // Allow external URLs
                                     />
                                 </div>
-                                <span className="text-xs md:text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors whitespace-nowrap">
+                                <span className="text-[11px] md:text-[13px] font-semibold text-slate-700 group-hover:text-blue-600 transition-colors whitespace-nowrap leading-tight">
                                     {cat.name}
                                 </span>
                             </motion.div>

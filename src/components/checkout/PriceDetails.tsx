@@ -2,6 +2,7 @@
 
 import { useCartStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
+import { formatPrice } from "@/lib/utils"
 import { ShieldCheck } from "lucide-react"
 
 export function PriceDetails() {
@@ -27,33 +28,33 @@ export function PriceDetails() {
             <div className="space-y-4 text-sm">
                 <div className="flex justify-between">
                     <span>Price ({items.length} item{items.length !== 1 && 's'})</span>
-                    <span>₹{total.toLocaleString()}</span>
+                    <span>{formatPrice(total)}</span>
                 </div>
 
                 {/* Show Gift Card Discount if applied */}
                 {isGiftCardApplied && (
                     <div className="flex justify-between">
                         <span>Gift Card Discount</span>
-                        <span className="text-green-600">- ₹{giftCardDiscount.toLocaleString()}</span>
+                        <span className="text-green-600">- {formatPrice(giftCardDiscount)}</span>
                     </div>
                 )}
 
                 <div className="flex justify-between">
                     <span>Delivery Charges</span>
                     <span className="text-green-600">
-                        {deliveryCharges === 0 ? "Free" : `₹${deliveryCharges}`}
+                        {deliveryCharges === 0 ? "Free" : formatPrice(deliveryCharges)}
                     </span>
                 </div>
 
                 <div className="flex justify-between font-bold text-lg border-t border-dashed pt-4 mt-4">
                     <span>Total Amount</span>
-                    <span>₹{finalAmount.toLocaleString()}</span>
+                    <span>{formatPrice(finalAmount)}</span>
                 </div>
             </div>
 
             {isGiftCardApplied && (
                 <div className="mt-4 text-green-600 font-medium text-sm">
-                    You will save ₹{giftCardDiscount.toLocaleString()} on this order
+                    You will save {formatPrice(giftCardDiscount)} on this order
                 </div>
             )}
 

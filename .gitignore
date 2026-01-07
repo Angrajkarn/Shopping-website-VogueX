@@ -41,6 +41,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 # User-specific / Test scripts
 backend/test_gemini.py
 test_atlas.py

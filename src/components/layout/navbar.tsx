@@ -13,6 +13,13 @@ import { useCartStore } from "@/lib/store"
 import { MegaMenu } from "./MegaMenu"
 import { UserMenu } from "./UserMenu"
 import { SearchModal } from "./SearchModal"
+import {
+    Sheet,
+    SheetContent,
+    SheetTrigger,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet"
 
 const navItems = [
     { name: "New Arrivals", href: "/shop" },
@@ -26,6 +33,7 @@ export function Navbar() {
     const pathname = usePathname()
     const [isScrolled, setIsScrolled] = React.useState(false)
     const [activeCategory, setActiveCategory] = React.useState<string | null>(null)
+    const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -59,9 +67,37 @@ export function Navbar() {
         >
             <div className="container mx-auto px-4 h-16 flex items-center justify-between relative z-50">
                 {/* Mobile Menu */}
-                <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                </Button>
+                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="md:hidden">
+                            <Menu className="h-5 w-5" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                        <SheetHeader className="text-left border-b pb-4 mb-4">
+                            <SheetTitle>
+                                <Link href="/" className="text-2xl font-bold tracking-tighter" onClick={() => setMobileMenuOpen(false)}>
+                                    VOGUE<span className="text-primary/50">X</span>
+                                </Link>
+                            </SheetTitle>
+                        </SheetHeader>
+                        <div className="flex flex-col gap-1">
+                            {navItems.map((item) => (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={cn(
+                                        "block px-2 py-3 text-lg font-medium transition-colors hover:bg-muted rounded-md",
+                                        pathname === item.href ? "text-primary" : "text-foreground"
+                                    )}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    {item.name}
+                                </Link>
+                            ))}
+                        </div>
+                    </SheetContent>
+                </Sheet>
 
                 {/* Logo */}
                 <Link href="/" className="text-2xl font-bold tracking-tighter">

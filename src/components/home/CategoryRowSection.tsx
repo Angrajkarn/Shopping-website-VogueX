@@ -2,6 +2,7 @@
 
 import { useRef } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { ChevronRight, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,9 +20,10 @@ interface CategoryRowSectionProps {
     bgImage?: string
     products: Product[]
     textColor?: string
+    category?: string
 }
 
-export function CategoryRowSection({ title, bgImage, products, textColor = "text-slate-800" }: CategoryRowSectionProps) {
+export function CategoryRowSection({ title, bgImage, products, textColor = "text-slate-800", category }: CategoryRowSectionProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null)
 
     const scroll = (direction: 'left' | 'right') => {
@@ -49,9 +51,11 @@ export function CategoryRowSection({ title, bgImage, products, textColor = "text
                     )}
                     <div className="relative z-10 space-y-4 mb-8">
                         <h3 className={`text-3xl font-light tracking-tight ${textColor}`}>{title}</h3>
-                        <Button className="bg-primary text-white hover:shadow-lg shadow-md">
-                            View All
-                        </Button>
+                        <Link href={category ? `/shop?category=${category}` : '/shop'}>
+                            <Button className="bg-primary text-white hover:shadow-lg shadow-md">
+                                View All
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 
@@ -65,9 +69,11 @@ export function CategoryRowSection({ title, bgImage, products, textColor = "text
                             <motion.div
                                 key={product.id}
                                 whileHover={{ y: -5 }}
-                                className="min-w-[180px] w-[180px] md:min-w-[200px] md:w-[200px] border rounded-lg p-3 hover:shadow-lg transition-shadow bg-white cursor-pointer group shrink-0"
+                                className="min-w-[180px] w-[180px] md:min-w-[200px] md:w-[200px] border rounded-lg p-3 hover:shadow-lg transition-shadow bg-white cursor-pointer group shrink-0 relative"
                             >
-                                <div className="relative w-full aspect-square mb-3 bg-slate-50 rounded-md overflow-hidden">
+                                <Link href={`/products/${product.id}`} className="absolute inset-0 z-0" aria-label={product.name} />
+
+                                <div className="relative z-10 aspect-square mb-3 bg-slate-50 rounded-md overflow-hidden pointer-events-none">
                                     <Image
                                         src={product.image}
                                         alt={product.name}
@@ -75,7 +81,7 @@ export function CategoryRowSection({ title, bgImage, products, textColor = "text
                                         className="object-contain p-2 group-hover:scale-105 transition-transform"
                                     />
                                 </div>
-                                <div className="text-center space-y-1">
+                                <div className="text-center space-y-1 relative z-10 pointer-events-none">
                                     <h4 className="font-medium text-slate-800 text-sm truncate">{product.name}</h4>
                                     <p className="text-green-600 font-bold text-sm">{product.offer}</p>
                                     <p className="text-slate-500 text-xs">{product.price}</p>

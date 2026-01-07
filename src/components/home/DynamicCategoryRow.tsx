@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { CategoryRowSection } from "./CategoryRowSection"
 import { getProducts } from "@/lib/api"
+import { formatPrice } from "@/lib/utils"
 
 interface DynamicCategoryRowProps {
     title: string
@@ -25,9 +26,9 @@ export function DynamicCategoryRow({ title, category, bgImage, textColor }: Dyna
                 const mapped = data.products.map(p => ({
                     id: p.id,
                     name: p.title,
-                    price: `₹${p.price.toLocaleString()}`, // Format price
+                    price: formatPrice(p.price), // Format price
                     offer: p.stock < 5 ? "Only a few left!" : "Best Seller", // Simple logic for now
-                    image: p.thumbnail
+                    image: p.thumbnail || "https://dummyjson.com/image/400x400/008080/ffffff?text=No+Image"
                 }))
                 setProducts(mapped)
             } catch (e) {
@@ -52,6 +53,7 @@ export function DynamicCategoryRow({ title, category, bgImage, textColor }: Dyna
             title={title}
             bgImage={bgImage}
             products={products}
+            category={category}
             textColor={textColor}
         />
     )

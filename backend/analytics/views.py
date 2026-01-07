@@ -224,3 +224,89 @@ class StylistView(APIView):
             "type": "text"
         })
 
+
+from django.db.models import Count
+
+class CollaborativeRecommendationsView(APIView):
+    """
+    User-User Collaborative Filtering (People who viewed this also viewed...)
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        product_id = request.query_params.get('product_id')
+        if not product_id:
+            return Response({"error": "Product ID required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Find users/sessions who interacted with this product
+        # Considering VIEW, CART_ADD, PURCHASE as positive signals
+        positive_interactions = ['VIEW', 'CART_ADD', 'PURCHASE', 'TIME_30S']
+        
+        relevant_interactions = UserInteraction.objects.filter(
+            product_id=product_id,
+            interaction_type__in=positive_interactions
+        )
+
+        user_ids = relevant_interactions.exclude(user__isnull=True).values_list('user', flat=True).distinct()
+        session_ids = relevant_interactions.filter(user__isnull=True).values_list('session_id', flat=True).distinct()
+
+        # 2. Find other products these users interacted with
+        # Exclude the current product
+        recommendations = UserInteraction.objects.filter(
+            interaction_type__in=positive_interactions
+        ).exclude(product_id=product_id)
+
+        # Filter by the identified cohort
+        recommendations = recommendations.filter(
+            Q(user__in=user_ids) | Q(session_id__in=session_ids)
+        )
+
+        # 3. Aggregation & Ranking
+        # Group by product_id and count freq
+        # We need to manually aggregate since product_id is CharField in analytics (loose link)
+        # Ideally we join with Product table but for loose analytics it's safer to count first
+        
+        top_ids = recommendations.values('product_id').annotate(
+            count=Count('id')
+        ).order_by('-count')[:6]
+
+        if not top_ids:
+            return Response([])
+
+        # 4. Fetch Product Details
+        product_ids = [item['product_id'] for item in top_ids]
+        
+        # Convert to int if needed (assuming product model uses Int ID)
+        # Analytics might store '123' string
+        valid_ids = []
+        for pid in product_ids:
+            if pid and pid.isdigit():
+                valid_ids.append(int(pid))
+
+        products = Product.objects.filter(id__in=valid_ids)
+        
+        # Preserve order (roughly) - O(N^2) but N is small (6)
+        results = []
+        for item in top_ids:
+            pid = int(item['product_id']) if item['product_id'].isdigit() else 0
+            product = next((p for p in products if p.id == pid), None)
+            if product:
+                img = product.images.filter(image_type='MAIN').first()
+                img_url = img.url if img else (product.images.first().url if product.images.exists() else "")
+                
+                try:
+                    variant = product.variants.first()
+                    price = float(variant.price_selling) if variant else 0
+                except:
+                    price = 0
+
+                results.append({
+                    'id': product.id,
+                    'name': product.name,
+                    'price': price,
+                    'image': img_url,
+                    'category': product.category.name if product.category else ""
+                })
+
+        return Response(results)
+

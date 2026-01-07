@@ -7,6 +7,10 @@ import { CartSidebar } from "@/components/cart/CartSidebar";
 import { MainLayoutWrapper } from "@/components/layout/main-layout-wrapper";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
+import { ExitIntentPopup } from "@/components/ui/ExitIntentPopup";
+import { GlobalLoader } from "@/components/ui/GlobalLoader";
+import { VoiceControlProvider } from "@/context/VoiceControlContext";
+import { VoiceOrb } from "@/components/voice/VoiceOrb";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,14 +27,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className={cn(inter.className, "min-h-screen flex flex-col")} suppressHydrationWarning>
-        <MainLayoutWrapper
-          navbar={<Navbar />}
-          sidebar={<CartSidebar />}
-          footer={<Footer />}
-        >
-          {children}
-        </MainLayoutWrapper>
-        <Toaster position="top-center" richColors />
+        <VoiceControlProvider>
+          <GlobalLoader />
+          <MainLayoutWrapper
+            navbar={<Navbar />}
+            sidebar={<CartSidebar />}
+            footer={<Footer />}
+          >
+            {children}
+          </MainLayoutWrapper>
+          <VoiceOrb />
+          <ExitIntentPopup />
+          <Toaster position="top-center" richColors />
+        </VoiceControlProvider>
       </body>
     </html>
   );

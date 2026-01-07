@@ -1,10 +1,37 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MotionSection } from "@/components/ui/MotionSection"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 export function Newsletter() {
+    const [email, setEmail] = useState("")
+    const [loading, setLoading] = useState(false)
+
+    const handleSubscribe = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!email) return
+
+        setLoading(true)
+        try {
+            const res = await api.subscribeNewsletter(email)
+            if (res.message) {
+                toast.success(res.message)
+                setEmail("")
+            } else {
+                toast.error("Something went wrong.")
+            }
+        } catch (error) {
+            toast.error("Failed to subscribe.")
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <section className="relative py-24 overflow-hidden">
             {/* Background with parallax-like effect */}
@@ -25,14 +52,21 @@ export function Newsletter() {
                     <p className="text-lg text-gray-200">
                         Subscribe to our newsletter for exclusive drops, early access to sales, and curated fashion trends delivered to your inbox.
                     </p>
-                    <form className="flex flex-col sm:flex-row gap-4" onSubmit={(e) => e.preventDefault()}>
+                    <form className="flex flex-col sm:flex-row gap-4" onSubmit={handleSubscribe}>
                         <Input
                             type="email"
                             placeholder="Enter your email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            required
                             className="bg-white/20 border-white/30 text-white placeholder:text-gray-300 focus-visible:ring-white/50 h-12"
                         />
-                        <Button size="lg" className="bg-white text-black hover:bg-gray-200 h-12 font-semibold">
-                            Subscribe
+                        <Button
+                            size="lg"
+                            disabled={loading}
+                            className="bg-white text-black hover:bg-gray-200 h-12 font-semibold min-w-[140px]"
+                        >
+                            {loading ? <Loader2 className="animate-spin" /> : "Subscribe"}
                         </Button>
                     </form>
                     <p className="text-xs text-gray-400">
