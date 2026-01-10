@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -28,7 +29,9 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className={cn(inter.className, "min-h-screen flex flex-col")} suppressHydrationWarning>
         <VoiceControlProvider>
-          <GlobalLoader />
+          <Suspense fallback={null}>
+            <GlobalLoader />
+          </Suspense>
           <MainLayoutWrapper
             navbar={<Navbar />}
             sidebar={<CartSidebar />}
