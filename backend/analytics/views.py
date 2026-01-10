@@ -310,3 +310,64 @@ class CollaborativeRecommendationsView(APIView):
 
         return Response(results)
 
+
+from .ml import RecommendationEngine
+
+class PersonalizedRecommendationsView(APIView):
+    """
+    Hybrid AI Recommendations
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        user = request.user
+        limit = int(request.query_params.get('limit', 8))
+        
+        engine = RecommendationEngine()
+        
+        product_ids = []
+        if user.is_authenticated:
+            # Collaborative Filtering
+            product_ids = engine.get_user_recommendations(user.id, top_n=limit)
+        else:
+            # Popular / Trending
+            product_ids = engine.get_popular_products(top_n=limit)
+            
+        # Fetch Product Objects
+        # Convert IDs to appropriate type (int)
+        valid_ids = [int(pid) for pid in product_ids if str(pid).isdigit()]
+        
+        products = Product.objects.filter(id__in=valid_ids)
+        
+        # Serialize
+        results = []
+        # Preserve order from recommendation engine
+        for pid in valid_ids:
+            product = next((p for p in products if p.id == pid), None)
+            if product:
+                img = product.images.filter(image_type='MAIN').first()
+                img_url = img.url if img else (product.images.first().url if product.images.exists() else "")
+                
+                try:
+                    variant = product.variants.first()
+                    price = float(variant.price_selling) if variant else 0
+                except:
+                    price = 0
+
+                # Safely get category name from JSONField
+                category_name = ""
+                if isinstance(product.category, dict):
+                    category_name = product.category.get('name') or product.category.get('level3') or product.category.get('level2') or ""
+                elif isinstance(product.category, str):
+                    category_name = product.category
+                
+                results.append({
+                    'id': product.id,
+                    'name': product.name,
+                    'price': price,
+                    'image': img_url,
+                    'category': category_name,
+                    'brand': product.brand
+                })
+                
+        return Response(results)

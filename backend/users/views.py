@@ -424,7 +424,19 @@ class NewsletterSubscriptionView(APIView):
 
     def post(self, request):
         email = request.data.get('email')
-        if email:
-            print(f"Newsletter Subscription for: {email}")
-            return Response({"message": "Subscribed successfully"}, status=status.HTTP_200_OK)
-        return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if already subscribed
+        from .models import NewsletterSubscriber
+        obj, created = NewsletterSubscriber.objects.get_or_create(email=email)
+        
+        if not created and not obj.is_active:
+             obj.is_active = True
+             obj.save()
+             return Response({"message": "Welcome back! Your subscription has been reactivated."}, status=status.HTTP_200_OK)
+        
+        if not created:
+             return Response({"message": "You are already subscribed!"}, status=status.HTTP_200_OK)
+
+        return Response({"message": "Welcome to the revolution! Subscribed successfully."}, status=status.HTTP_201_CREATED)

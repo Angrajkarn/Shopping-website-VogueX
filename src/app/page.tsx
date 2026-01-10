@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { affinityEngine } from "@/lib/affinity-engine";
+import { PersonalizedFeed } from "@/components/home/PersonalizedFeed";
 
 import { HeroCarousel } from "@/components/ui/HeroCarousel";
 import { Newsletter } from "@/components/home/Newsletter";
@@ -34,12 +36,12 @@ import { InspiredBySearch } from "@/components/home/InspiredBySearch";
 import { LiveFOMOTicker } from "@/components/home/LiveFOMOTicker";
 import { TrendingTicker } from "@/components/home/TrendingTicker";
 import { VideoBanner } from "@/components/home/VideoBanner";
-import { PersonalizedFeed } from "@/components/home/PersonalizedFeed";
-import { motion, AnimatePresence } from "framer-motion";
+import RecommendedForYou from "@/components/home/RecommendedForYou";
 
 export default function Home() {
   const [sectionOrder, setSectionOrder] = useState<string[]>([
     "hero",
+    "recommended-for-you", // Added here
     "new-arrivals",
     "personalized-feed",
     "recently-viewed",
@@ -109,6 +111,7 @@ export default function Home() {
         />
       </div>
     ),
+    "recommended-for-you": <RecommendedForYou />,
     "personalized-feed": <PersonalizedFeed />,
     "recently-viewed": <RecentlyViewed />,
     "bank-offers": <BankOfferStrip />,

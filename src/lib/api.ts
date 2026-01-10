@@ -48,6 +48,27 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 }
 
 export const api = {
+    // Helper to get headers with token from localStorage (Zustand persist)
+    _getHeaders() {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        }
+        if (typeof window !== 'undefined') {
+            try {
+                const storage = localStorage.getItem('auth-storage')
+                if (storage) {
+                    const { state } = JSON.parse(storage)
+                    if (state?.token) {
+                        headers['Authorization'] = `Bearer ${state.token}`
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to parse auth token for headers", e)
+            }
+        }
+        return { headers }
+    },
+
     // Products (Backend)
     async getProducts(
         category?: string,
@@ -199,6 +220,12 @@ export const api = {
             const err = await res.json().catch(() => ({}))
             throw new Error(err.error || "Failed to scrape product")
         }
+        return res.json()
+    },
+
+    // AI Recommendations
+    async getPersonalizedRecommendations(limit: number = 8) {
+        const res = await fetch(`${BACKEND_URL}/analytics/recommendations/personalized/?limit=${limit}`, this._getHeaders())
         return res.json()
     },
 
@@ -608,6 +635,20 @@ export const api = {
         return res.json()
     },
 
+    // Newsletter
+    async subscribeNewsletter(email: string) {
+        const res = await fetch(`${BACKEND_URL}/users/newsletter/subscribe/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        })
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}))
+            throw new Error(err.error || "Failed to subscribe")
+        }
+        return res.json()
+    },
+
     // Wishlist
     async getWishlist(token: string) {
         const res = await fetch(`${BACKEND_URL}/wishlist/`, {
@@ -771,7 +812,7 @@ export const api = {
         // We'll use the 'products' endpoint with category filter as a proxy for "AI Feed" 
         // since we don't have a dedicated ML backend service yet.
         // This effectively returns "More like [Category]"
-        return this.getProducts(params.toString())
+        return this.getProducts(category)
     },
 
     async askStylist(message: string, session_id?: string, token?: string) {

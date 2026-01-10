@@ -84,6 +84,27 @@ DATABASES = {
     }
 }
 
+# MongoDB Atlas Configuration (Overrides default if MONGO_URI is present)
+# MongoDB Atlas Configuration (Overrides default if MONGO_URI is present)
+# NOTE: Temporarily disabled due to critical SSL handshake failure with legacy Djongo driver on Windows.
+# Falling back to SQLite for stability.
+MONGO_URI = os.getenv('MONGO_URI') or os.getenv('DATABASE_URL')
+# if MONGO_URI and 'mongodb' in MONGO_URI:
+#     # import certifi
+#     DATABASES['default'] = {
+#         'ENGINE': 'djongo',
+#         'NAME': 'voguex_db',
+#         'ENFORCE_SCHEMA': False,
+#         'CLIENT': {
+#             'host': MONGO_URI,
+#             'tls': True,
+#             'tlsAllowInvalidCertificates': True,
+#             'tlsAllowInvalidHostnames': True,
+#             # 'tlsCAFile': certifi.where(),
+#             'uuidRepresentation': 'standard',
+#         }
+#     }
+
 DATABASE_ROUTERS = ['config.db_routers.AdminPanelRouter']
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -143,13 +164,24 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+if not CORS_ALLOWED_ORIGINS or CORS_ALLOWED_ORIGINS == ['']:
+    CORS_ALLOWED_ORIGINS = []
+
+CORS_ALLOWED_ORIGINS += [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+if not CSRF_TRUSTED_ORIGINS or CSRF_TRUSTED_ORIGINS == ['']:
+    CSRF_TRUSTED_ORIGINS = []
+    
+# Add CORS origins to CSRF trusted as well usually
+CSRF_TRUSTED_ORIGINS += CORS_ALLOWED_ORIGINS
+
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all in debug mode
 
-# Email Configuration
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST')
@@ -159,27 +191,65 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = f"VogueX <{os.getenv('EMAIL_HOST_USER')}>"
 
-# Caching (Redis)
+# Caching (Redis with Fallback)
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1')
+# Simple check if we want to force local memory (e.g. if known to fail)
+# For now, we try Redis config, but if it fails during runtime we can't easily switch here without a try/except import or strict env var.
+# We will assume if REDIS_URL is default localhost, it might fail if not running.
+# Better strategy: Use InMemory if explicitly told, or if specific env var is set.
+# But for this fix, let's allow fallback if REDIS_URL is not set OR if we are in a dev environment without Redis.
+
+if os.getenv('USE_IN_MEMORY_CACHE') == 'True' or not os.getenv('REDIS_URL'):
+     # Fallback to local memory if explicitly requested or no REDIS_URL provided (and assuming localhost defaults might fail)
+     # However, to be safe and robust given the user's situation:
+     pass
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+             "IGNORE_EXCEPTIONS": True, # Prevents crashing if Redis is down
         }
     }
 }
 
 # CHANNEL LAYERS for WebSockets
+# If Redis is not available, use InMemoryChannelLayer (Note: bad for scale, okay for dev)
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [REDIS_URL],
         },
     },
 }
 
-# Session Engine (Redis for high performance)
-# SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-# SESSION_CACHE_ALIAS = "default"
+# Check if we should fallback (You might want to set this env var in dev)
+# Or we can catch connection errors at runtime, but settings is load time.
+# For now, let's keep Redis config but add a note or mechanism? 
+# Actually, let's use the IGNORE_EXCEPTIONS in Cache. 
+# For Channels, it might crash. Let's switch Channels to In-Memory if REDIS_URL is the default localhost one AND we suspect it's not there?
+# No, that's risky. Let's provide a fallback configuration commented out or swappable.
+
+# FORCE FALLBACK FOR NOW TO UNBLOCK USER IF REDIS IS MISSING
+# We can check connectivity? No, settings file shouldn't do network IO.
+# We'll stick to the plan: If the user didn't explicitly provide a REDIS_URL, we'll try to be safe? 
+# The user didn't say they have Redis. They only said MongoDB Atlas.
+# Safest bet: Use In-Memory for Channels if in DEBUG mode and no specific REDIS_URL is set?
+# But REDIS_URL default is set above.
+if DEBUG:
+    # Fallback to In-Memory Channel Layer for development to avoid Redis dependency
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
+    # Also use dummy cache or locmem
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }

@@ -86,7 +86,7 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
             <div className="aspect-[3/4] relative overflow-hidden pointer-events-none">
                 <Image
                     src={image || "https://dummyjson.com/image/400x400/008080/ffffff?text=No+Image"}
-                    alt={name}
+                    alt={name || "Product Image"}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "C:\Users\karnk\Desktop\fashion-advance\backend\analytics\views.py", line 363, in get
+    'category': product.category.name if product.category else "",
+                ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'name'
