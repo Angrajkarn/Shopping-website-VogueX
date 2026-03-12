@@ -9,26 +9,35 @@ import { Button } from "@/components/ui/button"
 import { useAnalytics } from "@/hooks/useAnalytics"
 import { api } from "@/lib/api"
 
+import { semanticSearch } from "@/lib/semantic-search"
+
 export function SearchModal({ children }: { children: React.ReactNode }) {
     const [open, setOpen] = React.useState(false)
     const [query, setQuery] = React.useState("")
     const [suggestions, setSuggestions] = React.useState<string[]>([])
+    const [semanticIntent, setSemanticIntent] = React.useState<any>(null)
     const [isListening, setIsListening] = React.useState(false)
     const [isScanning, setIsScanning] = React.useState(false)
     const fileInputRef = React.useRef<HTMLInputElement>(null)
     const router = useRouter()
     const { track } = useAnalytics()
 
-    // Mock suggestions or fetch from backend
     React.useEffect(() => {
-        if (query.length > 2) {
-            // In a real app, debounce and fetch from api.searchProducts(query) to get suggestions
-            // For now, mock based on query
-            if ("sarees".includes(query.toLowerCase())) setSuggestions(["Silk Saree", "Cotton Saree", "Banarasi Saree"])
-            else if ("kurta".includes(query.toLowerCase())) setSuggestions(["Mens Kurta", "Womens Kurta Set", "Yellow Kurta"])
-            else setSuggestions([])
+        if (query.length > 1) {
+            const intent = semanticSearch.findIntent(query)
+            setSemanticIntent(intent)
+
+            const baseSuggestions = []
+            if (intent) baseSuggestions.push(intent.vibe)
+            
+            // Traditional keyword matching
+            if ("sarees".includes(query.toLowerCase())) baseSuggestions.push("Silk Saree", "Cotton Saree")
+            else if ("kurta".includes(query.toLowerCase())) baseSuggestions.push("Mens Kurta", "Yellow Kurta")
+            
+            setSuggestions(baseSuggestions)
         } else {
             setSuggestions([])
+            setSemanticIntent(null)
         }
     }, [query])
 
@@ -37,12 +46,19 @@ export function SearchModal({ children }: { children: React.ReactNode }) {
         const q = term || query
         if (!q.trim()) return
 
-        // 🧠 TRACK ML EVENT
-        track('SEARCH', { metadata: { query: q, type: isListening ? 'voice' : 'text' } })
+        // 🧠 SEMANTIC ROUTING
+        let path = `/shop?q=${encodeURIComponent(q)}`
+        if (semanticIntent && (term === semanticIntent.vibe || q.toLowerCase().includes(semanticIntent.vibe.split(' ')[1]?.toLowerCase()))) {
+            const catParam = semanticIntent.category ? `&category=${semanticIntent.category}` : ''
+            path = `/shop?q=${encodeURIComponent(semanticIntent.query || q)}${catParam}`
+        }
 
+        track('SEARCH', { metadata: { query: q, type: isListening ? 'voice' : 'text', semantic: !!semanticIntent } })
         setOpen(false)
-        router.push(`/shop?q=${encodeURIComponent(q)}`)
+        router.push(path)
     }
+
+    // ... (rest of the component)
 
     const startListening = () => {
         if (!('webkitSpeechRecognition' in window)) {

@@ -23,24 +23,40 @@ import { useRef } from "react"
 import { affinityEngine } from "@/lib/affinity-engine"
 import { useImpressionTracker } from "@/hooks/useImpressionTracker"
 
+import { useState, useEffect } from "react"
+import { UrgencyBadge } from "./UrgencyBadge"
+
 export function ProductCard({ id, name, price, image, category }: ProductCardProps) {
     const addItem = useCartStore((state) => state.addItem)
     const { token, isAuthenticated } = useAuthStore()
     const { track } = useAnalytics()
     const hoverTimer = useRef<NodeJS.Timeout | null>(null)
     const { markAsEngaged } = useImpressionTracker(id, category)
+    const [showUrgency, setShowUrgency] = useState(false)
+    const DISCOUNT_PERCENT = 10
+
+    useEffect(() => {
+        const checkAffinity = () => {
+            const scores = affinityEngine.getScores()
+            if (category && (scores[category] || 0) > 100) {
+                setShowUrgency(true)
+            }
+        }
+
+        checkAffinity() // Check immediately
+        const unsubscribe = affinityEngine.subscribe(checkAffinity)
+        return unsubscribe
+    }, [category])
 
     const onMouseEnter = () => {
-        markAsEngaged() // Engaged with product
+        markAsEngaged()
         hoverTimer.current = setTimeout(() => {
-            // Track for Backend
             track('HOVER', {
                 product_id: id,
                 metadata: { source: 'card', category, title: name, image, price }
             })
-            // Track for Frontend Neural Engine
             if (category) affinityEngine.track(category, 'hover')
-        }, 2000) // 2 seconds threshold
+        }, 2000)
     }
 
     const onMouseLeave = () => {
@@ -48,12 +64,10 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
     }
 
     const handleWishlist = async (e: React.MouseEvent) => {
-        e.preventDefault() // Prevent link navigation
+        e.preventDefault()
         e.stopPropagation()
 
         if (!isAuthenticated || !token) {
-            // alert("Please login to use wishlist");
-            // Better: redirect or show toast
             window.location.href = '/login'
             return
         }
@@ -72,6 +86,8 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
         }
     }
 
+    const finalPrice = showUrgency ? price * (1 - DISCOUNT_PERCENT / 100) : price
+
     return (
         <div
             id={`product-${id}`}
@@ -79,8 +95,10 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
+            <UrgencyBadge show={showUrgency} discount={DISCOUNT_PERCENT} />
+
             <Link href={`/products/${createProductSlug(name, id)}`} onClick={() => {
-                markAsEngaged() // Engaged with product
+                markAsEngaged()
                 track('VIEW', {
                     product_id: id,
                     metadata: { source: 'card_click', title: name, image, price }
@@ -97,7 +115,6 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
 
-                {/* Quick Actions */}
                 <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-300 pointer-events-auto">
                     <Button
                         size="icon"
@@ -119,14 +136,23 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
                 </div>
 
                 <div className="flex items-center justify-between mt-4">
-                    <span className="font-bold text-lg">{formatPrice(price)}</span>
+                    <div className="flex flex-col">
+                        {showUrgency && (
+                            <span className="text-xs text-muted-foreground line-through decoration-red-500/50">
+                                {formatPrice(price)}
+                            </span>
+                        )}
+                        <span className={cn("font-bold text-lg", showUrgency && "text-orange-600")}>
+                            {formatPrice(finalPrice)}
+                        </span>
+                    </div>
                     <Button
                         size="sm"
                         variant="outline"
                         className="rounded-full hover:bg-primary hover:text-primary-foreground transition-colors pointer-events-auto relative z-10"
                         onClick={() => {
-                            addItem({ id, name, price, image, category, quantity: 1 })
-                            track('CART_ADD', { product_id: id, metadata: { price, currency: 'INR' } })
+                            addItem({ id, name, price: finalPrice, image, category, quantity: 1 })
+                            track('CART_ADD', { product_id: id, metadata: { price: finalPrice, currency: 'INR' } })
                         }}
                     >
                         <ShoppingCart className="h-4 w-4 mr-2" />
