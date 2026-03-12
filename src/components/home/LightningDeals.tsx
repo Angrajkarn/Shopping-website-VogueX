@@ -9,6 +9,7 @@ import { motion } from "framer-motion"
 import { api, Product } from "@/lib/api"
 import { useCartStore } from "@/lib/store"
 import { toast } from "sonner"
+import { createProductSlug } from "@/lib/utils"
 
 export function LightningDeals() {
     const [timeLeft, setTimeLeft] = useState({ h: 4, m: 23, s: 15 })
@@ -100,7 +101,7 @@ export function LightningDeals() {
                                     whileHover={{ y: -8 }}
                                     className="min-w-[280px] w-[280px] bg-white rounded-xl shadow-sm border border-slate-100 p-4 relative snap-center shrink-0 hover:shadow-xl transition-all"
                                 >
-                                    <Link href={`/products/${deal.id}`} className="absolute inset-0 z-0" aria-label={deal.title} />
+                                    <Link href={`/products/${createProductSlug(deal.title, deal.id)}`} className="absolute inset-0 z-0" aria-label={deal.title} />
 
                                     <div className="absolute top-4 left-4 z-10 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1 pointer-events-none">
                                         <Flame className="w-3 h-3 fill-current" />

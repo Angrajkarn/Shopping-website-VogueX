@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthState>()(
                 set({ token, isAuthenticated: true })
                 // Sync to cookie for Middleware
                 if (typeof document !== 'undefined') {
-                    document.cookie = `auth_token=${token}; path=/; max-age=604800; SameSite=Strict; Secure`
+                    document.cookie = `auth_token=${token}; path=/; max-age=604800; SameSite=Lax`
                 }
                 try {
                     const user = await api.getProfile(token)
@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>()(
                 localStorage.removeItem("auth-storage")
                 // Remove cookie
                 if (typeof document !== 'undefined') {
-                    document.cookie = "auth_token=; path=/; max-age=0; SameSite=Strict; Secure"
+                    document.cookie = "auth_token=; path=/; max-age=0; SameSite=Lax"
                     window.location.href = '/'
                 }
             },
@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>()(
                 if (state?.token && typeof document !== 'undefined') {
                     if (!document.cookie.includes('auth_token=')) {
                         console.log("Restoring Auth Cookie from Storage")
-                        document.cookie = `auth_token=${state.token}; path=/; max-age=604800; SameSite=Strict; Secure`
+                        document.cookie = `auth_token=${state.token}; path=/; max-age=604800; SameSite=Lax`
                     }
                 }
             }

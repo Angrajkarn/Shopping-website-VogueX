@@ -10,7 +10,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key')
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = False
+# DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
@@ -131,20 +132,23 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --- PRODUCTION SECURITY ---
+# Hardcoded to False to ensure HTTP access on IP-based deployments without SSL
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
 if not DEBUG:
-    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_SECONDS = 31536000 # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    # HSTS disabled for IP deployments
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -192,17 +196,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = f"VogueX <{os.getenv('EMAIL_HOST_USER')}>"
 
 # Caching (Redis with Fallback)
-REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1')
-# Simple check if we want to force local memory (e.g. if known to fail)
-# For now, we try Redis config, but if it fails during runtime we can't easily switch here without a try/except import or strict env var.
-# We will assume if REDIS_URL is default localhost, it might fail if not running.
-# Better strategy: Use InMemory if explicitly told, or if specific env var is set.
-# But for this fix, let's allow fallback if REDIS_URL is not set OR if we are in a dev environment without Redis.
-
-if os.getenv('USE_IN_MEMORY_CACHE') == 'True' or not os.getenv('REDIS_URL'):
-     # Fallback to local memory if explicitly requested or no REDIS_URL provided (and assuming localhost defaults might fail)
-     # However, to be safe and robust given the user's situation:
-     pass
+REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379/1')
 
 CACHES = {
     "default": {
@@ -216,7 +210,6 @@ CACHES = {
 }
 
 # CHANNEL LAYERS for WebSockets
-# If Redis is not available, use InMemoryChannelLayer (Note: bad for scale, okay for dev)
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -239,6 +232,40 @@ CHANNEL_LAYERS = {
 # The user didn't say they have Redis. They only said MongoDB Atlas.
 # Safest bet: Use In-Memory for Channels if in DEBUG mode and no specific REDIS_URL is set?
 # But REDIS_URL default is set above.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
 if DEBUG:
     # Fallback to In-Memory Channel Layer for development to avoid Redis dependency
     CHANNEL_LAYERS = {

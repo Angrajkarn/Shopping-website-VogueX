@@ -6,6 +6,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { ChevronRight, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { createProductSlug } from "@/lib/utils"
 
 interface Product {
     id: number
@@ -71,7 +72,7 @@ export function CategoryRowSection({ title, bgImage, products, textColor = "text
                                 whileHover={{ y: -5 }}
                                 className="min-w-[180px] w-[180px] md:min-w-[200px] md:w-[200px] border rounded-lg p-3 hover:shadow-lg transition-shadow bg-white cursor-pointer group shrink-0 relative"
                             >
-                                <Link href={`/products/${product.id}`} className="absolute inset-0 z-0" aria-label={product.name} />
+                                <Link href={`/products/${createProductSlug(product.name, product.id)}`} className="absolute inset-0 z-0" aria-label={product.name} />
 
                                 <div className="relative z-10 aspect-square mb-3 bg-slate-50 rounded-md overflow-hidden pointer-events-none">
                                     <Image

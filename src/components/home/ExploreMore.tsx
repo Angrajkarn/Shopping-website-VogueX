@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Heart, Plus, Loader2 } from "lucide-react"
 import { getProducts } from "@/lib/api"
-import { formatPrice } from "@/lib/utils"
+import { formatPrice, createProductSlug } from "@/lib/utils"
 
 interface ExploreItem {
     id: number | string
@@ -124,7 +124,7 @@ export function ExploreMore() {
                                 className={`break-inside-avoid relative rounded-xl overflow-hidden group cursor-pointer border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 ${item.type === 'ad' ? 'bg-slate-900 text-white' : 'bg-white'}`}
                             >
                                 {item.type === 'product' ? (
-                                    <Link href={`/products/${item.id}`}>
+                                    <Link href={`/products/${createProductSlug(item.title, item.id)}`}>
                                         <div className="relative aspect-[3/4] md:aspect-auto">
                                             <Image
                                                 src={item.image}

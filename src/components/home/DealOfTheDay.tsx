@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Clock, ChevronRight, ChevronLeft } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { formatPrice } from "@/lib/utils"
+import { formatPrice, createProductSlug } from "@/lib/utils"
 
 const deals = [
     {
@@ -109,7 +109,7 @@ export function DealOfTheDay() {
                                     whileHover={{ y: -5 }}
                                     className="min-w-[200px] md:min-w-[240px] bg-white p-3 rounded-xl border hover:shadow-lg transition-all cursor-pointer snap-start group shrink-0 relative"
                                 >
-                                    <Link href={`/products/${deal.id}`} className="absolute inset-0 z-0" aria-label={deal.name} />
+                                    <Link href={`/products/${createProductSlug(deal.name, deal.id)}`} className="absolute inset-0 z-0" aria-label={deal.name} />
 
                                     <div className="relative z-10 aspect-square mb-3 bg-gray-100 rounded-lg overflow-hidden pointer-events-none">
                                         <Image src={deal.image} alt={deal.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />

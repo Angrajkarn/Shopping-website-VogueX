@@ -44,5 +44,14 @@ export function useAnalytics() {
         }, token || undefined)
     }
 
-    return { track, sessionId }
+    const pulse = (productId: string | number, increment = 10) => {
+        if (!sessionId) return
+        api.pulseTrack({
+            product_id: productId.toString(),
+            session_id: sessionId,
+            increment
+        }, token || undefined)
+    }
+
+    return { track, pulse, sessionId }
 }

@@ -11,27 +11,160 @@ logger = logging.getLogger(__name__)
 class TrackEventView(APIView):
     """
     API endpoint to track user interactions (View, Hover, Add to Cart, etc.)
+    Now supports browser context and duration.
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
         data = request.data.copy()
         
-        # If user is logged in, attach user
-        if request.user.is_authenticated:
-            # We don't save 'user' via serializer directly if it's read-only or not in fields easily, 
-            # but standard is to pass it in save()
-            pass
-        
+        # Capture Browser/OS Context if provided
+        context = data.get('context', {})
+        if not context:
+            user_agent = request.META.get('HTTP_USER_AGENT', '')
+            context = {'user_agent': user_agent}
+
         serializer = UserInteractionSerializer(data=data)
         if serializer.is_valid():
             if request.user.is_authenticated:
-                serializer.save(user=request.user)
+                serializer.save(user=request.user, context=context)
             else:
-                serializer.save()
+                serializer.save(context=context)
                 
             return Response({"status": "tracked"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PulseTrackView(APIView):
+    """
+    Heartbeat endpoint to increment duration for an existing interaction.
+    Used for tracking exact time spent on a product or page.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        product_id = request.data.get('product_id')
+        session_id = request.data.get('session_id')
+        increment = int(request.data.get('increment', 10)) # Default 10s heartbeat
+        user = request.user
+
+        # Find the latest view/hover interaction for this product/session
+        # We update the most recent one to keep it simple
+        query = UserInteraction.objects.filter(
+            product_id=product_id,
+            interaction_type__in=['VIEW', 'HOVER']
+        ).order_by('-timestamp')
+
+        if user.is_authenticated:
+            interaction = query.filter(user=user).first()
+        elif session_id:
+            interaction = query.filter(session_id=session_id).first()
+        else:
+            return Response({"error": "No context"}, status=400)
+
+        if interaction:
+            interaction.duration += increment
+            interaction.save()
+            return Response({"duration": interaction.duration})
+        
+        return Response({"status": "no_interaction_found"}, status=200)
+
+class AffinityProfileView(APIView):
+    """
+    Calculates the user's category affinity scores in real-time.
+    Aggregates weights from views, clicks, and dwell time.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        user = request.user
+        session_id = request.query_params.get('session_id')
+
+        interactions = UserInteraction.objects.all()
+        if user.is_authenticated:
+            interactions = interactions.filter(user=user)
+        elif session_id:
+            interactions = interactions.filter(session_id=session_id)
+        else:
+            return Response({"scores": {}})
+
+        # Weighting logic
+        # VIEW=1, HOVER=2, CLICK=5, TIME_SPENT=0.5 per sec, CART=20
+        scores = {}
+        
+        for i in interactions[:200]: # Look back at last 200 signals
+            category = i.metadata.get('category')
+            if not category: continue
+
+            weight = 0
+            if i.interaction_type == 'VIEW': weight = 1
+            elif i.interaction_type == 'HOVER': weight = 2
+            elif i.interaction_type == 'SEARCH': weight = 5
+            elif i.interaction_type == 'CART_ADD': weight = 20
+            
+            # Engagement Duration Weight (0.1 points per second)
+            if i.duration > 0:
+                weight += (i.duration * 0.1)
+
+            scores[category] = scores.get(category, 0) + weight
+
+        # Sort and return
+        sorted_scores = dict(sorted(scores.items(), key=lambda x: x[1], reverse=True))
+        return Response({"scores": sorted_scores})
+
+class DynamicLayoutView(APIView):
+    """
+    Returns the personalized homepage section order based on affinity.
+    Enterprise-level dynamic layout engine.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        user = request.user
+        session_id = request.query_params.get('session_id')
+
+        # 1. Get Top Category from Affinity View (internal call logic)
+        affinity_view = AffinityProfileView()
+        affinity_res = affinity_view.get(request)
+        scores = affinity_res.data.get('scores', {})
+        
+        top_category = list(scores.keys())[0] if scores else None
+
+        # 2. Defaut Order
+        default_order = [
+            "hero", "new-arrivals", "personalized-feed", "recently-viewed",
+            "bank-offers", "seasonal", "lightning-deals", "hourly-deals",
+            "electronics", "beauty", "home", "luxury", "rest"
+        ]
+
+        if not top_category:
+            return Response({"order": default_order, "is_personalized": False})
+
+        # 3. Neural Reordering
+        # If user is into 'electronics', move 'electronics' to position 1 (after hero)
+        new_order = default_order.copy()
+        
+        # Mapping frontend categories to layout keys
+        mappings = {
+            'smartphones': 'electronics',
+            'laptops': 'electronics',
+            'fragrances': 'beauty',
+            'skincare': 'beauty',
+            'home-decoration': 'home',
+            'furniture': 'home',
+            'mens-shirts': 'new-arrivals', # or we could add a dedicated 'men' section
+            'womens-dresses': 'new-arrivals'
+        }
+
+        target_section = mappings.get(top_category)
+        if target_section and target_section in new_order:
+            new_order.remove(target_section)
+            new_order.insert(1, target_section) # Insert right after Hero
+
+        return Response({
+            "order": new_order,
+            "top_category": top_category,
+            "is_personalized": True
+        })
 
 class HistoryView(APIView):
     """

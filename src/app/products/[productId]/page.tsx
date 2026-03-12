@@ -10,6 +10,7 @@ import { Loader2, Star, ShieldCheck, MapPin, AlertCircle, Zap, CornerUpRight } f
 import { useCartStore } from "@/lib/store"
 import { useAuthStore } from "@/lib/auth-store"
 import { toast } from "sonner"
+import { getIdFromSlug, createProductSlug } from "@/lib/utils"
 
 import { ProductBundle } from "@/components/product/ProductBundle"
 import { RelatedProducts } from "@/components/product/RelatedProducts"
@@ -54,7 +55,8 @@ interface ProductDetail {
 
 export default function ProductPage() {
     const params = useParams()
-    const id = Array.isArray(params?.productId) ? params.productId[0] : params?.productId
+    const productIdParam = Array.isArray(params?.productId) ? params.productId[0] : params?.productId
+    const id = productIdParam ? getIdFromSlug(productIdParam) : ""
 
     const { addItem } = useCartStore()
     const [product, setProduct] = useState<ProductDetail | null>(null)
@@ -78,10 +80,12 @@ export default function ProductPage() {
                 setProduct(data)
 
                 // Default to first variant
-                if (data.variants && data.variants.length > 0) {
-                    const first = data.variants[0]
-                    setSelectedVariant(first)
-                    setSelectedAttributes(first.attributes)
+                if (data?.variants && data.variants.length > 0) {
+                    const first = data.variants?.[0]
+                    if (first) {
+                        setSelectedVariant(first)
+                        setSelectedAttributes(first.attributes || {})
+                    }
                 }
             } catch (err) {
                 setError("Failed to load product")
@@ -98,9 +102,10 @@ export default function ProductPage() {
         setSelectedAttributes(newAttrs)
 
         // Try to find exact match
-        const match = product?.variants.find(v => {
+        const match = product?.variants?.find(v => {
+            if (!v.attributes) return false
             return Object.entries(newAttrs).every(([k, val]) => {
-                // Handle potetial number/string mismatch in attributes if backend sends numbers
+                // Handle potential number/string mismatch in attributes if backend sends numbers
                 return String(v.attributes[k]) === String(val)
             })
         })
@@ -110,7 +115,7 @@ export default function ProductPage() {
 
     const router = useRouter()
     const { isAuthenticated } = useAuthStore()
-    const { track } = useAnalytics()
+    const { track, pulse } = useAnalytics()
 
     useEffect(() => {
         if (product) {
@@ -118,11 +123,18 @@ export default function ProductPage() {
                 product_id: product.id,
                 metadata: {
                     title: product.name,
-                    price: parseFloat(product.variants[0]?.price_selling || "0"),
-                    image: product.images[0]?.url,
-                    category: typeof product.category === 'string' ? product.category : product.category?.name
+                    price: parseFloat(product?.variants?.[0]?.price_selling || "0"),
+                    image: product?.images?.[0]?.url,
+                    category: typeof product.category === 'string' ? product.category : (product?.category?.level3 || product?.category?.name || "Uncategorized")
                 }
             })
+
+            // Pulse Tracking (Heartbeat every 10s)
+            const interval = setInterval(() => {
+                pulse(product.id, 10)
+            }, 10000)
+
+            return () => clearInterval(interval)
         }
     }, [product?.id])
 
@@ -132,17 +144,28 @@ export default function ProductPage() {
         brand: product?.brand || "Generic"
     })
 
+    // Canonical URL Redirection (SEO)
+    useEffect(() => {
+        if (product && productIdParam) {
+            const canonicalSlug = createProductSlug(product.name, product.id)
+            if (productIdParam !== canonicalSlug) {
+                // If the user visited via a raw ID or an old slug, redirect to the canonical one
+                router.replace(`/products/${canonicalSlug}`)
+            }
+        }
+    }, [product, productIdParam, router])
+
     const handleAddToCart = (silent = false) => {
         if (!product || !selectedVariant) return
 
         addItem({
             id: selectedVariant.id.toString(),
-            name: `${product.name} (${Object.values(selectedVariant.attributes).join(' ')})`,
+            name: `${product.name} (${Object.values(selectedVariant.attributes || {}).join(' ')})`,
             price: parseFloat(selectedVariant.price_selling),
-            image: product.images[0]?.url || "",
+            image: product.images?.[0]?.url || "",
             quantity: 1,
-            size: selectedVariant.attributes['storage'] || selectedVariant.attributes['size'] || 'N/A',
-            color: selectedVariant.attributes['color'] || 'N/A'
+            size: selectedVariant?.attributes?.['storage'] || selectedVariant?.attributes?.['size'] || 'N/A',
+            color: selectedVariant?.attributes?.['color'] || 'N/A'
         }, silent)
         if (!silent) toast.success("Added to cart!")
     }
@@ -185,9 +208,10 @@ export default function ProductPage() {
 
     // Extract all unique attribute keys and values from variants
     const getAttributeOptions = () => {
-        if (!product) return {}
+        if (!product || !Array.isArray(product.variants)) return {}
         const options: Record<string, Set<string>> = {}
         product.variants.forEach(v => {
+            if (!v.attributes) return
             Object.entries(v.attributes).forEach(([key, val]) => {
                 if (key === 'color_hex') return // Skip hex codes for display logic
                 if (!options[key]) options[key] = new Set()
@@ -210,7 +234,7 @@ export default function ProductPage() {
     if (error || !product) return <div className="h-screen flex items-center justify-center text-red-500">Product not found</div>
 
     const attributeOptions = getAttributeOptions()
-    const discount = selectedVariant
+    const discount = (selectedVariant && parseFloat(selectedVariant.price_mrp) > 0)
         ? Math.round(((parseFloat(selectedVariant.price_mrp) - parseFloat(selectedVariant.price_selling)) / parseFloat(selectedVariant.price_mrp)) * 100)
         : 0
 
@@ -218,7 +242,7 @@ export default function ProductPage() {
         <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 {/* Left: Gallery */}
-                <ProductGallery images={product.images} />
+                <ProductGallery images={product.images || []} />
 
                 {/* Right: Info */}
                 <div className="space-y-6">
@@ -282,7 +306,7 @@ export default function ProductPage() {
                     </div>
 
                     {/* Inventory Status */}
-                    {selectedVariant && (
+                    {selectedVariant && selectedVariant.inventory ? (
                         <div className="flex items-center gap-2 text-sm">
                             {selectedVariant.inventory.available_stock < 10 ? (
                                 <span className="text-red-600 font-bold animate-pulse flex items-center gap-1">
@@ -295,6 +319,10 @@ export default function ProductPage() {
                                     In Stock
                                 </span>
                             )}
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 text-sm text-gray-500 italic">
+                            Contact store for availability
                         </div>
                     )}
 
@@ -343,8 +371,8 @@ export default function ProductPage() {
                             mainProduct={{
                                 id: product.id,
                                 name: product.name,
-                                price: parseFloat(selectedVariant.price_selling),
-                                image: product.images[0]?.url,
+                                price: parseFloat(selectedVariant?.price_selling || "0"),
+                                image: product.images?.[0]?.url || "",
                                 category: product.category
                             }}
                         />
@@ -354,7 +382,7 @@ export default function ProductPage() {
                     <div className="border-t pt-8 mt-8">
                         <h3 className="text-2xl font-bold mb-6">Customer Reviews</h3>
 
-                        {product.reviews && product.reviews.length > 0 ? (
+                        {Array.isArray(product.reviews) && product.reviews.length > 0 ? (
                             <div className="space-y-6">
                                 {product.reviews.map((review) => (
                                     <div key={review.id} className="border-b pb-6 last:border-0">
@@ -394,8 +422,8 @@ export default function ProductPage() {
             )}
 
             {/* Recommended For You (History) */}
-            <div className="mt-16">
-                <RelatedProducts type="history" />
+            <div className="mt-8">
+                <RelatedProducts type="history" currentProductId={product?.id} />
             </div>
 
             {/* Matrix Engine: Collab Filtering */}
@@ -403,7 +431,7 @@ export default function ProductPage() {
                 <div className="mt-8">
                     <PeopleAlsoBought
                         currentProductId={product.id.toString()}
-                        currentCategory={typeof product.category === 'string' ? product.category : product.category?.slug || "general"}
+                        currentCategory={typeof product.category === 'string' ? product.category : (product?.category?.slug || product?.category?.name || "general")}
                     />
                 </div>
             )}
@@ -412,8 +440,8 @@ export default function ProductPage() {
             {product && selectedVariant && (
                 <StickyCartBar
                     productName={product.name}
-                    productPrice={parseFloat(selectedVariant.price_selling)}
-                    productImage={product.images[0]?.url || ""}
+                    productPrice={parseFloat(selectedVariant.price_selling || "0")}
+                    productImage={product.images?.[0]?.url || ""}
                     onAddToCart={() => handleAddToCart(false)}
                 />
             )}

@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Loader2, Trash2, ShoppingCart, Heart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { createProductSlug } from "@/lib/utils"
 import { useCartStore } from "@/lib/store"
 
 export default function WishlistPage() {
@@ -64,7 +65,7 @@ export default function WishlistPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {wishlist.map((item) => (
                         <div key={item.id} className="group relative bg-card rounded-xl overflow-hidden border hover:shadow-lg transition-all duration-300">
-                            <Link href={`/products/${item.product_id}`}>
+                            <Link href={`/products/${createProductSlug(item.product_name, item.product_id)}`}>
                                 <div className="aspect-[3/4] relative overflow-hidden">
                                     <Image
                                         src={item.product_image}
@@ -77,7 +78,7 @@ export default function WishlistPage() {
                             </Link>
 
                             <div className="p-4">
-                                <Link href={`/products/${item.product_id}`}>
+                                <Link href={`/products/${createProductSlug(item.product_name, item.product_id)}`}>
                                     <h3 className="font-medium truncate hover:text-primary transition-colors mb-2">
                                         {item.product_name}
                                     </h3>

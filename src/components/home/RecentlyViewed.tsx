@@ -18,7 +18,7 @@ export function RecentlyViewed() {
             try {
                 // Fetch using session ID
                 const data = await api.getHistory(sessionId)
-                setHistory(data)
+                setHistory(Array.isArray(data) ? data : (data?.products || []))
             } catch (error) {
                 console.error("Failed to load history", error)
             } finally {
@@ -44,7 +44,7 @@ export function RecentlyViewed() {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {history.map((item, i) => (
+                    {Array.isArray(history) && history.map((item, i) => (
                         <motion.div
                             key={`${item.id}-${i}`}
                             initial={{ opacity: 0, y: 20 }}

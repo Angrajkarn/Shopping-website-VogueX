@@ -19,10 +19,29 @@ class ProductListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = Product.objects.filter(status='ACTIVE')
         
-        # Filter by Category (Level 1) -> Men, Women, Electronics
+        # Filter by Category (Smarter mapping for Frontend Slugs)
         category = self.request.query_params.get('category')
         if category:
-            queryset = queryset.filter(category__level1__iexact=category)
+            category = category.lower()
+            if category in ['men', 'mens-shirts', 'men-clothing']:
+                queryset = queryset.filter(category__level1__iexact='Men')
+            elif category in ['women', 'womens-dresses', 'women-clothing']:
+                queryset = queryset.filter(category__level1__iexact='Women')
+            elif category in ['accessories', 'sunglasses', 'handbags']:
+                queryset = queryset.filter(
+                    Q(category__level1__iexact='Accessories') |
+                    Q(category__level2__iexact='Accessories') |
+                    Q(category__level3__icontains='Handbags') |
+                    Q(category__level1__iexact='Jewelry')
+                )
+            else:
+                # Generic fallback: check all levels
+                queryset = queryset.filter(
+                    Q(category__level1__iexact=category) |
+                    Q(category__level2__iexact=category) |
+                    Q(category__level3__iexact=category) |
+                    Q(category__level3__icontains=category.replace('-', ' '))
+                )
             
         # Filter by SubCategory (Level 2) -> Jeans, Mobiles
         subcategory = self.request.query_params.get('subcategory')

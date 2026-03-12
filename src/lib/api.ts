@@ -10,6 +10,8 @@ export interface Product {
     category: string
     thumbnail: string
     images: string[]
+    name?: string
+    variants?: any[]
 }
 
 export interface ProductResponse {
@@ -20,7 +22,7 @@ export interface ProductResponse {
 }
 
 const BASE_URL = "https://dummyjson.com"
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://65.1.73.183:8000/api"
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
     const res = await fetch(url, options)
@@ -29,7 +31,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
             if (typeof window !== 'undefined') {
                 console.error("Session Expired: Redirecting to Login")
                 localStorage.removeItem('auth-storage')
-                document.cookie = "auth_token=; path=/; max-age=0; SameSite=Strict; Secure"
+                document.cookie = "auth_token=; path=/; max-age=0; SameSite=Lax"
                 window.location.href = '/login'
             }
             throw new Error("Session expired. Please login again.")
@@ -119,22 +121,22 @@ export const api = {
         if (Array.isArray(data)) {
             rawProducts = data
             total = data.length
-        } else if (data.results) {
+        } else if (data && data.results && Array.isArray(data.results)) {
             rawProducts = data.results
             total = data.count
         }
 
-        const products = rawProducts.map((p: any) => {
+        const products = Array.isArray(rawProducts) ? rawProducts.map((p: any) => {
             // Derive Price from first variant
             const price = p.variants && p.variants.length > 0
-                ? parseFloat(p.variants[0].price_selling)
+                ? parseFloat(p.variants?.[0]?.price_selling || "0")
                 : 0
 
             // Derive Thumbnail from images (MAIN or first)
             let thumbnail = ""
             if (p.images && p.images.length > 0) {
                 const main = p.images.find((img: any) => img.image_type === 'MAIN')
-                thumbnail = main ? main.url : p.images[0].url
+                thumbnail = main ? main.url : p.images?.[0]?.url || ""
             }
 
             // Derive Category string
@@ -148,6 +150,7 @@ export const api = {
             return {
                 id: p.id,
                 title: p.name,
+                name: p.name,
                 description: p.description_short,
                 price: price,
                 discountPercentage: 0, // Backend doesn't return this yet on root, ignore
@@ -156,9 +159,10 @@ export const api = {
                 brand: p.brand,
                 category: category,
                 thumbnail: thumbnail,
-                images: p.images ? p.images.map((i: any) => i.url) : []
+                images: (p.images && Array.isArray(p.images)) ? p.images.map((i: any) => i.url) : [],
+                variants: p.variants || []
             }
-        })
+        }) : []
 
         return { products, total, skip, limit }
     },
@@ -182,7 +186,8 @@ export const api = {
             throw new Error("Failed to fetch categories")
         }
         const data = await res.json()
-        return data.map((c: any) => c.slug)
+        if (!Array.isArray(data)) return []
+        return data.map((c: any) => c.slug || c.name || c)
     },
 
     async searchProducts(query: string): Promise<ProductResponse> {
@@ -753,20 +758,52 @@ export const api = {
     },
 
     // 🧠 AI/ML Analytics (Observer)
-    async trackEvent(data: { interaction_type: string, product_id?: string | number, metadata?: any, session_id?: string }, token?: string) {
-        const headers: any = { 'Content-Type': 'application/json' }
+    async trackEvent(data: {
+        interaction_type: string
+        product_id?: string | number
+        session_id?: string
+        metadata?: any
+        context?: any
+    }, token?: string) {
+        // Analytics should be fire-and-forget
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
         if (token) headers['Authorization'] = `Bearer ${token}`
+        
+        return fetch(`${BACKEND_URL}/analytics/track/`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(data)
+        }).catch(e => console.warn("Track failed:", e))
+    },
 
-        // Silent fail is preferred for analytics to not block UI
-        try {
-            await fetch(`${BACKEND_URL}/analytics/track/`, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify(data),
-            })
-        } catch (e) {
-            console.warn("Analytics tracking failed:", e)
+    async pulseTrack(data: {
+        product_id: string
+        session_id: string
+        increment: number
+    }, token?: string) {
+        return fetch(`${BACKEND_URL}/analytics/pulse/`, {
+            method: 'POST',
+            ...this._getHeadersWithToken(token),
+            body: JSON.stringify(data)
+        })
+    },
+
+    async getDynamicLayout(params: { session_id?: string }, token?: string) {
+        const query = params.session_id ? `?session_id=${params.session_id}` : ''
+        return fetch(`${BACKEND_URL}/analytics/layout/${query}`, {
+            method: 'GET',
+            ...this._getHeadersWithToken(token)
+        }).then(res => res.json())
+    },
+
+    _getHeadersWithToken(token?: string) {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
         }
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`
+        }
+        return { headers }
     },
 
     async trackPageExit(data: any) {
@@ -789,8 +826,13 @@ export const api = {
         if (token) headers['Authorization'] = `Bearer ${token}`
 
         const res = await fetch(url, { headers })
-        if (!res.ok) return []
-        return res.json()
+        if (!res.ok) return { products: [] }
+        const data = await res.json()
+        
+        // Normalize: if it's an array, wrap it; if it has results, use that
+        if (Array.isArray(data)) return { products: data }
+        if (data.results) return { products: data.results, total: data.count }
+        return data.products ? data : { products: [] }
     },
 
     async getInspiredProducts(session_id?: string, token?: string) {

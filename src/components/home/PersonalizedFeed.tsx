@@ -8,7 +8,7 @@ import Image from "next/image"
 
 import { api } from "@/lib/api"
 import { affinityEngine } from "@/lib/affinity-engine"
-import { formatPrice } from "@/lib/utils"
+import { formatPrice, createProductSlug } from "@/lib/utils"
 
 interface Product {
     id: number
@@ -76,7 +76,7 @@ export function PersonalizedFeed() {
                             transition={{ delay: idx * 0.1 }}
                             className="group relative bg-white rounded-2xl p-3 border border-slate-100 hover:border-violet-200 hover:shadow-xl hover:shadow-violet-500/10 transition-all duration-500"
                         >
-                            <Link href={`/products/${p.id}`} className="absolute inset-0 z-10" />
+                            <Link href={`/products/${createProductSlug(p.title, p.id)}`} className="absolute inset-0 z-10" />
 
                             <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-slate-100 mb-3">
                                 <Image

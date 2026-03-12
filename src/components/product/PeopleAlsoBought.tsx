@@ -42,14 +42,14 @@ export function PeopleAlsoBought({ currentProductId, currentCategory }: { curren
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {recommendations.map(p => (
+                {Array.isArray(recommendations) && recommendations.map(p => (
                     <ProductCard
                         key={p.id}
-                        id={p.id}
+                        id={p.id.toString()}
                         name={p.name}
-                        price={parseFloat(p.price || p.variants?.[0]?.price_selling || "0")}
-                        image={p.images?.[0]?.url || p.thumbnail}
-                        category={p.category?.name || "Recommended"}
+                        price={parseFloat(p.price || p?.variants?.[0]?.price_selling || "0")}
+                        image={p.thumbnail || (typeof p.images?.[0] === 'string' ? p.images[0] : p.images?.[0]?.url) || ""}
+                        category={(typeof p.category === 'string' ? p.category : p.category?.name) || "Recommended"}
                     />
                 ))}
             </div>

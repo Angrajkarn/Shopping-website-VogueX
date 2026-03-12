@@ -74,7 +74,8 @@ export default function SignupPage() {
 
             // 3. Store Token & Redirect
             await login(loginRes.access)
-            router.push("/profile")
+            router.push("/")
+            router.refresh()
 
         } catch (err: any) {
             setError(err.message || "Invalid OTP or Signup failed.")

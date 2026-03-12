@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Clock } from "lucide-react"
-import { formatPrice } from "@/lib/utils"
+import { formatPrice, createProductSlug } from "@/lib/utils"
 
 const deals = [
     { id: 1, name: "Zara Summer Dress", price: 1299, oldPrice: 2599, discount: "50% OFF", image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500&q=80" },
@@ -66,7 +66,7 @@ export function HourlyFashionDeals() {
                                 whileHover={{ y: -4 }}
                                 className="bg-white rounded-lg p-2 border border-slate-100 hover:shadow-md cursor-pointer group relative"
                             >
-                                <Link href={`/products/${item.id}`} className="absolute inset-0 z-0" aria-label={item.name} />
+                                <Link href={`/products/${createProductSlug(item.name, item.id)}`} className="absolute inset-0 z-0" aria-label={item.name} />
 
                                 <div className="relative z-10 aspect-[3/4] mb-2 rounded overflow-hidden bg-slate-100 pointer-events-none">
                                     <Image src={item.image} alt={item.name} fill className="object-cover" />

@@ -1,23 +1,42 @@
-version: '3.8'
-
 services:
+  frontend:
+    build: .
+    image: voguex-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://65.1.73.183:8000/api
+    depends_on:
+      - backend
+    restart: always
+
   backend:
-    build: ./backend
+    image: voguex-backend
     command: gunicorn -c gunicorn.conf.py config.asgi:application
-    volumes:
-      - ./backend:/app
     ports:
       - "8000:8000"
-    env_file:
-      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/staticfiles:/app/staticfiles
     environment:
       - DEBUG=False
+      - SECURE_SSL_REDIRECT=False
+      - SESSION_COOKIE_SECURE=False
+      - CSRF_COOKIE_SECURE=False
+      - REDIS_URL=redis://redis:6379/1
       - DATABASE_URL=postgres://voguex_user:securepassword@db:5432/voguex_db
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CHANNEL_LAYERS_HOST=redis
+      - ALLOWED_HOSTS=*,65.1.73.183
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_USE_TLS=True
+      - EMAIL_HOST_USER=workaxisk@gmail.com
+      - EMAIL_HOST_PASSWORD=stzb ymbm ttjn rrkv
     depends_on:
       - db
       - redis
+    restart: always
 
   db:
     image: postgres:15-alpine
@@ -27,9 +46,11 @@ services:
       - POSTGRES_DB=voguex_db
       - POSTGRES_USER=voguex_user
       - POSTGRES_PASSWORD=securepassword
+    restart: always
 
   redis:
     image: redis:7-alpine
+    restart: always
 
 volumes:
   postgres_data:

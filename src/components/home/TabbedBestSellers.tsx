@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Star, Heart, ShoppingBag, Loader2 } from "lucide-react"
-import { formatPrice } from "@/lib/utils"
+import { formatPrice, createProductSlug } from "@/lib/utils"
 import { getProducts } from "@/lib/api"
 
 const tabs = ["Best Sellers", "New Arrivals", "Top Rated"]
@@ -154,7 +154,7 @@ export function TabbedBestSellers() {
                                     transition={{ duration: 0.3 }}
                                     className="group bg-white rounded-2xl p-3 border hover:border-blue-200 hover:shadow-xl transition-all duration-300 relative"
                                 >
-                                    <Link href={`/products/${product.id}`} className="absolute inset-0 z-0" aria-label={product.name} />
+                                    <Link href={`/products/${createProductSlug(product.name, product.id)}`} className="absolute inset-0 z-0" aria-label={product.name} />
 
                                     <div className="relative z-10 aspect-[3/4] rounded-xl overflow-hidden mb-4 bg-gray-100 pointer-events-none">
                                         <Image

@@ -1,5 +1,5 @@
 # Build Stage
-FROM python:3.10-slim-buster as builder
+FROM python:3.10-slim-bullseye as builder
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
 # Final Stage
-FROM python:3.10-slim-buster
+FROM python:3.10-slim-bullseye
 
 WORKDIR /app
 

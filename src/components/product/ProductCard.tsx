@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Heart, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/lib/store"
-import { cn, formatPrice } from "@/lib/utils"
+import { cn, formatPrice, createProductSlug } from "@/lib/utils"
 import { toast } from "sonner"
 
 interface ProductCardProps {
@@ -75,7 +75,7 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            <Link href={`/products/${id}`} onClick={() => {
+            <Link href={`/products/${createProductSlug(name, id)}`} onClick={() => {
                 track('VIEW', {
                     product_id: id,
                     metadata: { source: 'card_click', title: name, image, price }

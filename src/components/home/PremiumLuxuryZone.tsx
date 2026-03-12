@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Star, Loader2, ArrowRight } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getProducts } from "@/lib/api"
-import { formatPrice } from "@/lib/utils"
+import { formatPrice, createProductSlug } from "@/lib/utils"
 import Link from "next/link"
 
 interface Product {
@@ -164,7 +164,7 @@ export function PremiumLuxuryZone() {
                                 viewport={{ once: true }}
                                 transition={{ delay: idx * 0.1 }}
                             >
-                                <Link href={`/products/${item.id}`}>
+                                <Link href={`/products/${createProductSlug(item.name, item.id)}`}>
                                     <div className="group relative h-[450px] cursor-pointer overflow-hidden rounded-md border border-white/5 bg-slate-900/20 hover:border-amber-500/30 transition-colors">
                                         <Image
                                             src={item.image}

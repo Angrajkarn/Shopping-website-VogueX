@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { OrderTracker } from "@/components/orders/OrderTracker"
 import { OrderSupportChat } from "@/components/orders/OrderSupportChat"
 import Link from "next/link"
+import { createProductSlug } from "@/lib/utils"
 import {
     Dialog,
     DialogContent,
@@ -283,7 +284,7 @@ export default function OrderDetailsPage() {
                         <div className="bg-white p-6 shadow-sm rounded-sm border border-gray-100">
                             <div className="flex gap-6 mb-8">
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 shrink-0 p-1 border rounded-md bg-white flex items-center justify-center relative overflow-hidden">
-                                    <Link href={`/products/${mainItem?.product_id}`} className="block relative h-full w-full">
+                                    <Link href={`/products/${createProductSlug(mainItem?.product_name || "product", mainItem?.product_id)}`} className="block relative h-full w-full">
                                         {mainItem?.product_image && (
                                             <img
                                                 src={mainItem.product_image}
@@ -295,7 +296,7 @@ export default function OrderDetailsPage() {
                                 </div>
 
                                 <div className="flex-1 min-w-0 flex flex-col justify-start pt-1">
-                                    <Link href={`/products/${mainItem?.product_id}`} className="hover:text-blue-600 transition-colors w-fit">
+                                    <Link href={`/products/${createProductSlug(mainItem?.product_name || "product", mainItem?.product_id)}`} className="hover:text-blue-600 transition-colors w-fit">
                                         <h2 className="font-semibold text-lg sm:text-xl leading-tight text-gray-900 mb-2 truncate">
                                             {mainItem?.product_name}
                                         </h2>

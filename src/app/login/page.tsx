@@ -20,7 +20,7 @@ import { Suspense } from "react"
 function LoginContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const redirectPath = searchParams.get('redirect') || '/profile'
+    const redirectPath = searchParams.get('redirect') || '/'
 
     const { login } = useAuthStore()
     const activeCartItems = useCartStore((state) => state.items)
@@ -49,10 +49,12 @@ function LoginContent() {
             }
 
             router.push(redirectPath)
+            router.refresh()
         } catch (e) {
             console.error("Login post-processing failed", e)
             // Still redirect even if sync fails? Maybe safer to show error but user is logged in.
             router.push(redirectPath)
+            router.refresh()
         }
     }
 

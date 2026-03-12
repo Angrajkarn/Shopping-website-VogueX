@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { affinityEngine } from "@/lib/affinity-engine";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { api } from "@/lib/api";
 import { PersonalizedFeed } from "@/components/home/PersonalizedFeed";
 
 import { HeroCarousel } from "@/components/ui/HeroCarousel";
@@ -33,15 +34,13 @@ import { TrustMarkers } from "@/components/home/TrustMarkers";
 import { ExploreMore } from "@/components/home/ExploreMore";
 import { RecentlyViewed } from "@/components/home/RecentlyViewed";
 import { InspiredBySearch } from "@/components/home/InspiredBySearch";
-import { LiveFOMOTicker } from "@/components/home/LiveFOMOTicker";
 import { TrendingTicker } from "@/components/home/TrendingTicker";
 import { VideoBanner } from "@/components/home/VideoBanner";
-import RecommendedForYou from "@/components/home/RecommendedForYou";
+
 
 export default function Home() {
   const [sectionOrder, setSectionOrder] = useState<string[]>([
     "hero",
-    "recommended-for-you", // Added here
     "new-arrivals",
     "personalized-feed",
     "recently-viewed",
@@ -56,42 +55,24 @@ export default function Home() {
     "rest"
   ]);
 
+  const { sessionId, track } = useAnalytics();
+
   useEffect(() => {
-    // Neural Reordering Logic
-    const topCategory = affinityEngine.getDominantCategory();
-
-    if (topCategory) {
-      console.log("🧠 AI Brain: Reordering Homepage for", topCategory);
-      setSectionOrder(prev => {
-        const newOrder = [...prev];
-
-        // Define Mappings
-        const mappings: Record<string, string> = {
-          'smartphones': 'electronics',
-          'laptops': 'electronics',
-          'fragrances': 'beauty',
-          'skincare': 'beauty',
-          'sunglasses': 'beauty',
-          'home-decoration': 'home',
-          'furniture': 'home',
-          'mens-shirts': 'new-arrivals',
-          'womens-dresses': 'new-arrivals'
-        };
-
-        const targetSection = mappings[topCategory];
-
-        if (targetSection) {
-          // Move target section to position 2 (after Hero)
-          const currentIndex = newOrder.indexOf(targetSection);
-          if (currentIndex > -1) {
-            newOrder.splice(currentIndex, 1);
-            newOrder.splice(2, 0, targetSection); // Insert after Hero + TopNav
-          }
+    const fetchLayout = async () => {
+      if (!sessionId) return;
+      try {
+        const data = await api.getDynamicLayout({ session_id: sessionId });
+        if (data && data.order) {
+          console.log("🧠 Neural Layout Active:", data.top_category || "Default");
+          setSectionOrder(data.order);
         }
-        return newOrder;
-      });
-    }
-  }, []);
+      } catch (err) {
+        console.warn("Failed to fetch dynamic layout, using default", err);
+      }
+    };
+    
+    fetchLayout();
+  }, [sessionId]);
 
   const components: Record<string, React.ReactNode> = {
     "hero": (
@@ -111,7 +92,7 @@ export default function Home() {
         />
       </div>
     ),
-    "recommended-for-you": <RecommendedForYou />,
+
     "personalized-feed": <PersonalizedFeed />,
     "recently-viewed": <RecentlyViewed />,
     "bank-offers": <BankOfferStrip />,
@@ -174,7 +155,6 @@ export default function Home() {
         <Testimonials />
         <SocialGrid />
         <Newsletter />
-        <LiveFOMOTicker />
         <TrustMarkers />
         <InspiredBySearch />
       </>

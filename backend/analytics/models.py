@@ -16,7 +16,9 @@ class UserInteraction(models.Model):
     session_id = models.CharField(max_length=255, null=True, blank=True, help_text="Anonymous session ID for non-logged in users")
     interaction_type = models.CharField(max_length=20, choices=INTERACTION_TYPES)
     product_id = models.CharField(max_length=255, null=True, blank=True) 
-    metadata = models.JSONField(default=dict, blank=True) # e.g. search query, time spent duration
+    duration = models.IntegerField(default=0, help_text="Time spent in seconds")
+    context = models.JSONField(default=dict, blank=True, help_text="Browser, OS, Device info")
+    metadata = models.JSONField(default=dict, blank=True) # e.g. search query, category
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:

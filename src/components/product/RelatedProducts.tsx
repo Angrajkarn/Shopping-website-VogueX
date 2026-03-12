@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { Product } from "@/types"
+import { Product } from "@/lib/api"
 import { api } from "@/lib/api"
 import { ProductCard } from "./ProductCard"
 import { Button } from "@/components/ui/button"
@@ -51,7 +51,8 @@ export function RelatedProducts({ type, categoryId, currentProductId }: RelatedP
                 }
 
                 // Filter out current product
-                const filtered = (data.products || [])
+                const productsArray = Array.isArray(data.products) ? data.products : []
+                const filtered = productsArray
                     .filter((p: Product) => String(p.id) !== String(currentProductId))
                     .slice(0, 4)
 
@@ -110,13 +111,13 @@ export function RelatedProducts({ type, categoryId, currentProductId }: RelatedP
                         </div>
                     ))
                 ) : (
-                    products.map((product) => (
+                    Array.isArray(products) && products.map((product) => (
                         <div key={product.id} className="min-w-[180px] md:min-w-[220px] snap-start">
                             <ProductCard
                                 id={String(product.id)}
-                                name={product.name || "Product"}
-                                price={parseFloat(product.variants[0]?.price_selling || "0")}
-                                image={product.images[0]?.url || ""}
+                                name={product.name || product.title || "Product"}
+                                price={product.price || parseFloat(product.variants?.[0]?.price_selling || "0")}
+                                image={product.image || product.thumbnail || product.images?.[0] || ""}
                                 category={
                                     typeof product.category === 'string'
                                         ? product.category

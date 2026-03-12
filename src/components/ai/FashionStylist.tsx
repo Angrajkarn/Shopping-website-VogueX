@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { MessageCircle, X, Send, Sparkles, Bot, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { api } from "@/lib/api"
+import { createProductSlug } from "@/lib/utils"
 import { useAnalytics } from "@/hooks/useAnalytics"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -130,7 +131,7 @@ export function FashionStylist() {
                                             {msg.type === 'products' && msg.data && (
                                                 <div className="mt-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                                                     {msg.data.map((p: any) => (
-                                                        <Link href={`/products/${p.id}`} key={p.id} className="min-w-[120px] bg-slate-50 rounded-lg border overflow-hidden block hover:opacity-90 transition-opacity no-underline">
+                                                        <Link href={`/products/${createProductSlug(p.name, p.id)}`} key={p.id} className="min-w-[120px] bg-slate-50 rounded-lg border overflow-hidden block hover:opacity-90 transition-opacity no-underline">
                                                             <div className="aspect-[3/4] relative bg-slate-200">
                                                                 <img src={p.image} className="object-cover w-full h-full" alt={p.name} />
                                                             </div>

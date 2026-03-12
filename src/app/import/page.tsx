@@ -9,6 +9,7 @@ import { Loader2, Download, CheckCircle, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import Image from "next/image"
 import Link from "next/link"
+import { createProductSlug } from "@/lib/utils"
 
 export default function ImportPage() {
     const [url, setUrl] = useState("")
@@ -102,7 +103,7 @@ export default function ImportPage() {
 
                             <div className="pt-4 flex gap-3">
                                 <Button asChild>
-                                    <Link href={`/products/${result.id}`}>View Product Page</Link>
+                                    <Link href={`/products/${createProductSlug(result.name, result.id)}`}>View Product Page</Link>
                                 </Button>
                                 <Button variant="outline" onClick={() => {
                                     setResult(null)

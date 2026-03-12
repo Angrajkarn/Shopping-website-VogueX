@@ -9,7 +9,7 @@ interface ProductGalleryProps {
 
 export function ProductGallery({ images }: ProductGalleryProps) {
     // Sort images: MAIN first, then others by display_order if available (assumed backend sorts)
-    const [selectedImage, setSelectedImage] = useState(images[0]?.url || "")
+    const [selectedImage, setSelectedImage] = useState(images?.[0]?.url || "")
 
     if (!images || images.length === 0) return <div className="bg-gray-100 aspect-square rounded-xl" />
 
@@ -26,7 +26,7 @@ export function ProductGallery({ images }: ProductGalleryProps) {
 
             {/* Thumbnails */}
             <div className="grid grid-cols-4 gap-4">
-                {images.map((img) => (
+                {Array.isArray(images) && images.map((img) => (
                     <button
                         key={img.id}
                         onClick={() => setSelectedImage(img.url)}

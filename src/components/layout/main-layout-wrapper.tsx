@@ -1,6 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
+import { MobileNav } from "./MobileNav"
 
 interface MainLayoutWrapperProps {
     children: React.ReactNode
@@ -22,9 +23,10 @@ export function MainLayoutWrapper({ children, navbar, footer, sidebar }: MainLay
         <>
             {navbar}
             {sidebar}
-            <main className="flex-1 pt-16">
+            <main className="flex-1 pt-16 pb-20 md:pb-0">
                 {children}
             </main>
+            <MobileNav />
             {footer}
         </>
     )

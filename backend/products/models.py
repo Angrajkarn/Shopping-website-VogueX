@@ -6,7 +6,7 @@ from users.models import User
 class Product(models.Model):
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
     name = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, max_length=255)
     brand = models.CharField(max_length=100)
     
     # Category as JSON: { level1: "Electronics", level2: "Mobiles", ... }
