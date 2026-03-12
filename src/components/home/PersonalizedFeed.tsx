@@ -34,15 +34,31 @@ export function PersonalizedFeed() {
             setInterest(dominant.replace(/-/g, " ")) // Format "mens-shirts" -> "mens shirts"
             loadPersonalized(dominant)
         }
+
+        // Subscribe to real-time "Millisecond" updates (Re-Ranking)
+        const unsubscribe = affinityEngine.subscribe(() => {
+            setProducts(prev => affinityEngine.reRank(prev, p => {
+                // Determine category from product structure
+                return typeof p.category === 'string' ? p.category : p.category.name.toLowerCase().replace(/\s+/g, '-')
+            }))
+        })
+
+        return () => unsubscribe()
     }, [])
 
     const loadPersonalized = async (category: string) => {
         try {
             const res = await api.getPersonalizedFeed(category)
             // Filter out items without images to maintain premium feel
-            const valid = (res.products || []).filter((p: any) => p.thumbnail).slice(0, 4)
-            setProducts(valid)
-            if (valid.length > 0) setIsVisible(true)
+            const valid = (res.products || []).filter((p: any) => p.thumbnail)
+            
+            // Initial re-rank based on existing knowledge
+            const ranked = affinityEngine.reRank(valid, p => {
+                 return typeof p.category === 'string' ? p.category : p.category.name.toLowerCase().replace(/\s+/g, '-')
+            })
+
+            setProducts(ranked.slice(0, 4))
+            if (ranked.length > 0) setIsVisible(true)
         } catch (e) {
             console.error("Personalized feed failed", e)
         }

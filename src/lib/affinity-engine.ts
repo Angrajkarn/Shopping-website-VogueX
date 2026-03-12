@@ -18,8 +18,21 @@ const STORAGE_KEY = "voguex_affinity_brain"
 class AffinityEngine {
     private profile: UserProfile
 
+    private listeners: (() => void)[] = []
+
     constructor() {
         this.profile = this.loadProfile()
+    }
+
+    subscribe(listener: () => void) {
+        this.listeners.push(listener)
+        return () => {
+            this.listeners = this.listeners.filter(l => l !== listener)
+        }
+    }
+
+    private notify() {
+        this.listeners.forEach(l => l())
     }
 
     private loadProfile(): UserProfile {
@@ -37,16 +50,18 @@ class AffinityEngine {
         if (typeof window === "undefined") return
         this.profile.lastActive = Date.now()
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.profile))
+        this.notify()
     }
 
     /**
      * Track an interaction with a category
      * @param category The category slug (e.g., 'mens-shirts')
-     * @param type 'view' | 'hover' | 'click' | 'cart' | 'time_30s' | 'deep_scroll'
+     * @param type 'view' | 'hover' | 'click' | 'cart' | 'time_30s' | 'deep_scroll' | 'ignore'
      */
-    track(category: string, type: 'view' | 'hover' | 'click' | 'cart' | 'time_30s' | 'deep_scroll') {
+    track(category: string, type: 'view' | 'hover' | 'click' | 'cart' | 'time_30s' | 'deep_scroll' | 'ignore') {
         const weights = {
             view: 1,      // Passive view
+            ignore: -1,   // Negative signal (viewed but ignored)
             hover: 3,     // Interest
             click: 10,    // Intent
             time_30s: 15, // Engagement (reading/comparing)
@@ -56,15 +71,28 @@ class AffinityEngine {
 
         const score = weights[type] || 1
 
-        // Decay logic: Reduce other categories slightly to keep focus sharp
-        // Object.keys(this.profile.scores).forEach(key => {
-        //     if (key !== category) this.profile.scores[key] *= 0.99
-        // })
-
         this.profile.scores[category] = (this.profile.scores[category] || 0) + score
+        
+        // Floor the score at 0 to avoid massive negative debt
+        if (this.profile.scores[category] < 0) this.profile.scores[category] = 0
+
         this.saveProfile()
 
-        console.log(`🧠 Affinity Update: ${category} (${type}) +${score} = ${this.profile.scores[category]}`)
+        console.log(`🧠 Affinity Update: ${category} (${type}) ${score > 0 ? '+' : ''}${score} = ${this.profile.scores[category]}`)
+    }
+
+    /**
+     * Re-ranks an array of items based on accumulated category affinity scores.
+     * Items from higher-scoring categories move to the front.
+     */
+    reRank<T>(items: T[], getCategory: (item: T) => string): T[] {
+        return [...items].sort((a, b) => {
+            const catA = getCategory(a)
+            const catB = getCategory(b)
+            const scoreA = this.profile.scores[catA] || 0
+            const scoreB = this.profile.scores[catB] || 0
+            return scoreB - scoreA
+        })
     }
 
     /**

@@ -48,49 +48,51 @@ export function TabbedBestSellers() {
     useEffect(() => {
         if (!isVisible) return
 
+        // Subscribe to real-time "Millisecond" updates
+        const unsubscribe = affinityEngine.subscribe(() => {
+            setProducts(prev => {
+                const current = prev[activeTab] || []
+                const reRanked = affinityEngine.reRank(current, p => (p as any).categorySlug || "")
+                return { ...prev, [activeTab]: reRanked }
+            })
+        })
+
         const fetchTabButtons = async () => {
             // Check Cache First
-            const CACHE_KEY = `highlights_v2_${activeTab}` // Versioned to invalidate old bad data
+            const CACHE_KEY = `highlights_v3_${activeTab}`
             const cached = sessionStorage.getItem(CACHE_KEY)
 
             if (cached && JSON.parse(cached).length > 0) {
-                setProducts(prev => ({ ...prev, [activeTab]: JSON.parse(cached) }))
+                const data = JSON.parse(cached)
+                setProducts(prev => ({ ...prev, [activeTab]: affinityEngine.reRank(data, p => (p as any).categorySlug || "") }))
                 return
             }
 
             setLoading(true)
             try {
-                let data: any
-
-                // Advanced Selection Logic
+                let rawData: any
                 if (activeTab === "Best Sellers") {
-                    // Algorithm: Mixed Bag of Popular Categories with High Stock
-                    // (Simulating Best Sellers by picking varied appealing items)
-                    const res = await getProducts("", 8) // Fetch generic top items
-                    data = res.products.map((p: any) => ({ ...p, _sortMetric: p.stock < 50 ? 1 : 0 })) // Prioritize low stock (scarcity)
+                    const res = await getProducts("", 12)
+                    rawData = res.products
                 } else if (activeTab === "New Arrivals") {
-                    // Algorithm: Fetch Generic + Reverse ID sort (proxies for 'newest' in some dbs)
-                    const res = await getProducts("", 8)
-                    data = res.products.sort((a: any, b: any) => b.id - a.id)
+                    const res = await getProducts("", 12)
+                    rawData = res.products.sort((a: any, b: any) => b.id - a.id)
                 } else if (activeTab === "Top Rated") {
-                    // Algorithm: Filter for Rating > 4.5
-                    const res = await getProducts("rating=4", 12) // Fetch more to filter down
-                    data = res.products.filter((p: any) => p.rating >= 4.5)
+                    const res = await getProducts("rating=4", 12)
+                    rawData = res.products.filter((p: any) => p.rating >= 4.5)
                 }
 
-                // Map to UI Model
-                const mapped: Product[] = (data || []).slice(0, 4).map((p: any) => ({
+                const mapped: Product[] = (rawData || []).map((p: any) => ({
                     id: p.id,
                     name: p.title,
                     price: formatPrice(p.price),
-                    // Fallback to a placeholder if thumbnail is missing or empty
-                    image: p.thumbnail && p.thumbnail.trim() !== ""
-                        ? p.thumbnail
-                        : "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?q=80&w=800&auto=format&fit=crop", // Elegant fallback
-                    rating: p.rating || (4.0 + Math.random()) // Fallback for aesthetic
-                }))
+                    image: p.thumbnail || "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?q=80&w=800&auto=format&fit=crop",
+                    rating: p.rating || 4.5,
+                    categorySlug: (p.category || "General").toLowerCase().replace(/\s+/g, '-')
+                } as any))
 
-                setProducts(prev => ({ ...prev, [activeTab]: mapped }))
+                const ranked = affinityEngine.reRank(mapped, p => (p as any).categorySlug).slice(0, 4)
+                setProducts(prev => ({ ...prev, [activeTab]: ranked }))
                 sessionStorage.setItem(CACHE_KEY, JSON.stringify(mapped))
 
             } catch (error) {
@@ -101,6 +103,7 @@ export function TabbedBestSellers() {
         }
 
         fetchTabButtons()
+        return () => unsubscribe()
     }, [activeTab, isVisible])
 
     return (

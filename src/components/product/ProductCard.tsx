@@ -21,14 +21,17 @@ import { useAuthStore } from "@/lib/auth-store"
 import { useAnalytics } from "@/hooks/useAnalytics"
 import { useRef } from "react"
 import { affinityEngine } from "@/lib/affinity-engine"
+import { useImpressionTracker } from "@/hooks/useImpressionTracker"
 
 export function ProductCard({ id, name, price, image, category }: ProductCardProps) {
     const addItem = useCartStore((state) => state.addItem)
     const { token, isAuthenticated } = useAuthStore()
     const { track } = useAnalytics()
     const hoverTimer = useRef<NodeJS.Timeout | null>(null)
+    const { markAsEngaged } = useImpressionTracker(id, category)
 
     const onMouseEnter = () => {
+        markAsEngaged() // Engaged with product
         hoverTimer.current = setTimeout(() => {
             // Track for Backend
             track('HOVER', {
@@ -71,11 +74,13 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
 
     return (
         <div
+            id={`product-${id}`}
             className="group relative bg-card rounded-xl overflow-hidden border hover:shadow-lg transition-all duration-300"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
             <Link href={`/products/${createProductSlug(name, id)}`} onClick={() => {
+                markAsEngaged() // Engaged with product
                 track('VIEW', {
                     product_id: id,
                     metadata: { source: 'card_click', title: name, image, price }
