@@ -7,6 +7,7 @@ import Link from "next/link"
 import { api } from "@/lib/api"
 import { createProductSlug } from "@/lib/utils"
 import { useAnalytics } from "@/hooks/useAnalytics"
+import { useLoyalty } from "@/context/VogueXCoinsContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -22,6 +23,7 @@ type Message = {
 
 export function FashionStylist() {
     const { sessionId } = useAnalytics()
+    const { awardCoins } = useLoyalty()
     const [isOpen, setIsOpen] = useState(false)
     const [input, setInput] = useState("")
     const [isTyping, setIsTyping] = useState(false)
@@ -55,6 +57,11 @@ export function FashionStylist() {
         setMessages(prev => [...prev, userMsg])
         setInput("")
         setIsTyping(true)
+
+        // Award coins on first interaction
+        if (messages.length === 1) {
+            awardCoins('stylist_interaction', 50, 'First AI Stylist Chat')
+        }
 
         try {
             // Call API

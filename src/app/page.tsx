@@ -18,40 +18,24 @@ import { DealOfTheDay } from "@/components/home/DealOfTheDay";
 import { FeaturedBentoGrid } from "@/components/home/FeaturedBentoGrid";
 import { ShopByOccasion } from "@/components/home/ShopByOccasion";
 import { TabbedBestSellers } from "@/components/home/TabbedBestSellers";
-import { DynamicCategoryRow } from "@/components/home/DynamicCategoryRow";
-import { BrandSpotlight } from "@/components/home/BrandSpotlight";
-import { BudgetBuys } from "@/components/home/BudgetBuys";
-import { SeasonalPromoGrid } from "@/components/home/SeasonalPromoGrid";
-import { HourlyFashionDeals } from "@/components/home/HourlyFashionDeals";
-import { PremiumLuxuryZone } from "@/components/home/PremiumLuxuryZone";
-import { StyleInspiration } from "@/components/home/StyleInspiration";
-import { MembershipBanner } from "@/components/home/MembershipBanner";
-import { SponsoredProductStrip } from "@/components/home/SponsoredProductStrip";
-import { LightningDeals } from "@/components/home/LightningDeals";
-import { CreatorStudio } from "@/components/home/CreatorStudio";
-import { ModernCategoryGrid } from "@/components/home/ModernCategoryGrid";
-import { TrustMarkers } from "@/components/home/TrustMarkers";
-import { ExploreMore } from "@/components/home/ExploreMore";
-import { RecentlyViewed } from "@/components/home/RecentlyViewed";
-import { InspiredBySearch } from "@/components/home/InspiredBySearch";
-import { TrendingTicker } from "@/components/home/TrendingTicker";
-import { VideoBanner } from "@/components/home/VideoBanner";
-
+import { CategoryEnrichmentRow } from "@/components/home/CategoryEnrichmentRow";
 
 export default function Home() {
   const [sectionOrder, setSectionOrder] = useState<string[]>([
     "hero",
-    "new-arrivals",
     "personalized-feed",
     "recently-viewed",
     "bank-offers",
+    "electronics",
+    "fashion",
+    "mobiles",
+    "home-furniture",
+    "appliances",
+    "beauty",
+    "travel",
     "seasonal",
     "lightning-deals",
     "hourly-deals",
-    "electronics",
-    "beauty",
-    "home",
-    "luxury",
     "rest"
   ]);
 
@@ -64,7 +48,11 @@ export default function Home() {
         const data = await api.getDynamicLayout({ session_id: sessionId });
         if (data && data.order) {
           console.log("🧠 Neural Layout Active:", data.top_category || "Default");
-          setSectionOrder(data.order);
+          // Merge dynamic order with mandatory discovery sections
+          setSectionOrder(prev => {
+              const unique = Array.from(new Set([...data.order, ...prev]));
+              return unique;
+          });
         }
       } catch (err) {
         console.warn("Failed to fetch dynamic layout, using default", err);
@@ -82,52 +70,68 @@ export default function Home() {
         <div className="relative bg-white pb-2"><HeroCarousel /></div>
       </>
     ),
-    "new-arrivals": (
-      <div className="py-2">
-        <DynamicCategoryRow
-          title="New Arrivals & Fresh Drops"
-          category=""
-          bgImage="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&q=80"
-          textColor="text-white"
-        />
-      </div>
+    "mobiles": (
+      <CategoryEnrichmentRow
+        title="Smartphones & Gadgets"
+        category="smartphones"
+        bgImage="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&q=80"
+        textColor="text-white"
+      />
     ),
-
+    "fashion": (
+      <CategoryEnrichmentRow
+        title="Trendy Fashion"
+        category="mens-shirts"
+        bgImage="https://images.unsplash.com/photo-1445205170230-053b830c6050?w=800&q=80"
+        textColor="text-white"
+      />
+    ),
+    "electronics": (
+      <CategoryEnrichmentRow
+        title="Laptops & Computing"
+        category="laptops"
+        bgImage="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&q=80"
+        textColor="text-white"
+      />
+    ),
+    "home-furniture": (
+      <CategoryEnrichmentRow
+        title="Home & Furniture"
+        category="furniture"
+        bgImage="https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&q=80"
+        textColor="text-slate-800"
+      />
+    ),
+    "appliances": (
+      <CategoryEnrichmentRow
+        title="Kitchen & Home Appliances"
+        category="kitchen-accessories"
+        bgImage="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&q=80"
+        textColor="text-slate-800"
+      />
+    ),
+    "travel": (
+      <CategoryEnrichmentRow
+        title="Travel & Accessories"
+        category="sunglasses"
+        bgImage="https://images.unsplash.com/photo-1469854523086-cc02fe5d8dfc?w=800&q=80"
+        textColor="text-white"
+      />
+    ),
+    "beauty": (
+      <CategoryEnrichmentRow
+        title="Beauty & Skincare"
+        category="beauty"
+        bgImage="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&q=80"
+        textColor="text-slate-800"
+      />
+    ),
     "personalized-feed": <PersonalizedFeed />,
     "recently-viewed": <RecentlyViewed />,
     "bank-offers": <BankOfferStrip />,
     "seasonal": <div className="mt-4"><SeasonalPromoGrid /></div>,
     "lightning-deals": <LightningDeals />,
     "hourly-deals": <HourlyFashionDeals />,
-    "electronics": (
-      <div className="py-2">
-        <DynamicCategoryRow
-          title="Best of Electronics"
-          category="smartphones"
-          bgImage="https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&q=80"
-          textColor="text-white"
-        />
-      </div>
-    ),
-    "beauty": (
-      <div className="py-2">
-        <DynamicCategoryRow
-          title="Beauty & Personal Care"
-          category="fragrances"
-          bgImage="https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=500&q=80"
-          textColor="text-white"
-        />
-      </div>
-    ),
-    "home": (
-      <div className="py-2">
-        <DynamicCategoryRow
-          title="Home & Living"
-          category="home-decoration"
-          bgImage="https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=500&q=80"
-        />
-      </div>
-    ),
     "luxury": <PremiumLuxuryZone />,
     "rest": (
       <>

@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { Heart, ShoppingCart } from "lucide-react"
+import { Heart, ShoppingCart, Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/lib/store"
 import { cn, formatPrice, createProductSlug } from "@/lib/utils"
@@ -14,6 +14,7 @@ interface ProductCardProps {
     price: number
     image: string
     category: string
+    isExternal?: boolean
 }
 
 import { api } from "@/lib/api"
@@ -25,10 +26,12 @@ import { useImpressionTracker } from "@/hooks/useImpressionTracker"
 
 import { useState, useEffect } from "react"
 import { UrgencyBadge } from "./UrgencyBadge"
+import { useCollaboration } from "@/context/CollaborationContext"
 
 export function ProductCard({ id, name, price, image, category }: ProductCardProps) {
     const addItem = useCartStore((state) => state.addItem)
     const { token, isAuthenticated } = useAuthStore()
+    const { broadcastEvent } = useCollaboration()
     const { track } = useAnalytics()
     const hoverTimer = useRef<NodeJS.Timeout | null>(null)
     const { markAsEngaged } = useImpressionTracker(id, category)
@@ -79,6 +82,13 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
                 thumbnail: image || "https://dummyjson.com/image/400x400/008080/ffffff?text=No+Image",
                 price
             })
+            
+            // Broadcast social like
+            broadcastEvent('product_like', { 
+                product_id: id, 
+                product_name: name 
+            })
+
             toast.success("Added to wishlist")
         } catch (error) {
             console.error("Wishlist error", error)
@@ -129,7 +139,15 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
 
             <div className="p-4 relative z-10 pointer-events-none">
                 <div className="mb-2">
-                    <p className="text-xs text-muted-foreground capitalize">{category}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <p className="text-xs text-muted-foreground capitalize">{category}</p>
+                        {isExternal && (
+                            <span className="flex items-center gap-1 text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter border border-blue-100">
+                                <Globe className="w-2.5 h-2.5" />
+                                Global Discovery
+                            </span>
+                        )}
+                    </div>
                     <h3 className="font-medium truncate hover:text-primary transition-colors">
                         {name}
                     </h3>

@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'payments',
     'analytics',
     'loyalty',
+    'collaboration',
     'giftcards',
     'sellers',
     'admin_panel',
