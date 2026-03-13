@@ -7,6 +7,7 @@ import { api } from "@/lib/api"
 
 interface VoiceContextType {
     isListening: boolean
+    isProcessing: boolean
     transcript: string
     lastCommand: string | null
     toggleListening: () => void
@@ -18,6 +19,7 @@ const VoiceContext = createContext<VoiceContextType | undefined>(undefined)
 
 export function VoiceControlProvider({ children }: { children: ReactNode }) {
     const [isListening, setIsListening] = useState(false)
+    const [isProcessing, setIsProcessing] = useState(false)
     const [transcript, setTranscript] = useState("")
     const [lastCommand, setLastCommand] = useState<string | null>(null)
     const [isSupported, setIsSupported] = useState(false)
@@ -32,7 +34,7 @@ export function VoiceControlProvider({ children }: { children: ReactNode }) {
             if (SpeechRecognition) {
                 setIsSupported(true)
                 const recog = new SpeechRecognition()
-                recog.continuous = false // Single command mode for accuracy
+                recog.continuous = false
                 recog.interimResults = true
                 recog.lang = "en-US"
 
@@ -55,14 +57,9 @@ export function VoiceControlProvider({ children }: { children: ReactNode }) {
                 recog.onerror = (event: any) => {
                     console.error("Speech recognition error", event.error)
                     setIsListening(false)
+                    setIsProcessing(false)
                     if (event.error === 'not-allowed') {
-                        toast.error("Microphone access denied. Click the lock icon in the address bar to allow.", {
-                            duration: 5000,
-                            action: {
-                                label: "Help",
-                                onClick: () => alert("Click the Lock Icon 🔒 > Site Settings > Microphone > Allow")
-                            }
-                        })
+                        toast.error("Microphone access denied.")
                     }
                 }
 
@@ -73,12 +70,27 @@ export function VoiceControlProvider({ children }: { children: ReactNode }) {
 
     const processCommand = async (cmd: string) => {
         setLastCommand(cmd)
+        setIsProcessing(true)
 
         try {
+            // Get current context
+            const path = window.location.pathname
+            const searchParams = new URLSearchParams(window.location.search)
+            
+            // Extract product ID from URL if possible
+            // Format is usually /products/[name]-[id]
+            let productId = null
+            if (path.startsWith('/products/')) {
+                const parts = path.split('-')
+                productId = parts[parts.length - 1]
+            }
+
             // Backend Intent Engine
-            // Assuming 'api' is an imported utility for making API calls
-            // For example: import * as api from '@/lib/api';
-            const res = await api.processVoiceCommand(cmd)
+            const res = await api.processVoiceCommand(cmd, {
+                path,
+                productId,
+                category: searchParams.get('category')
+            })
 
             // Speak response
             if (res.message) speak(res.message)
@@ -88,32 +100,37 @@ export function VoiceControlProvider({ children }: { children: ReactNode }) {
                 router.push(res.val)
             } else if (res.action === 'scroll') {
                 const el = document.getElementById(res.val)
-                if (el) el.scrollIntoView({ behavior: 'smooth' })
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' })
+                } else {
+                    // Fallback to searching for the text in headings
+                    window.scrollBy({ top: 500, behavior: 'smooth' })
+                }
             } else if (res.action === 'scroll_window') {
                 window.scrollBy({ top: res.val, behavior: 'smooth' })
             } else if (res.action === 'scroll_top') {
                 window.scrollTo({ top: 0, behavior: 'smooth' })
+            } else if (res.action === 'reload') {
+                window.location.reload()
             }
 
         } catch (e) {
             console.error(e)
             speak("I'm having trouble connecting to the server.")
+        } finally {
+            setIsProcessing(false)
         }
     }
 
     const speak = (text: string) => {
         if (typeof window !== "undefined" && window.speechSynthesis) {
-            // Cancel prev speech
             window.speechSynthesis.cancel()
-
             const utterance = new SpeechSynthesisUtterance(text)
-            // Try to find a good voice
             const voices = window.speechSynthesis.getVoices()
-            const preferredVoice = voices.find(v => v.name.includes("Google US English") || v.name.includes("Samantha"))
+            const preferredVoice = voices.find(v => v.name.includes("Google US English") || v.name.includes("Samantha") || v.lang.startsWith("en"))
             if (preferredVoice) utterance.voice = preferredVoice
-
-            utterance.pitch = 1
-            utterance.rate = 1
+            utterance.pitch = 1.1 // Slightly higher for friendly vibe
+            utterance.rate = 1.0
             window.speechSynthesis.speak(utterance)
         }
     }
@@ -125,12 +142,11 @@ export function VoiceControlProvider({ children }: { children: ReactNode }) {
         } else {
             setTranscript("")
             recognition.start()
-            speak("I'm listening.")
         }
     }
 
     return (
-        <VoiceContext.Provider value={{ isListening, transcript, lastCommand, toggleListening, speak, isSupported }}>
+        <VoiceContext.Provider value={{ isListening, isProcessing, transcript, lastCommand, toggleListening, speak, isSupported }}>
             {children}
         </VoiceContext.Provider>
     )

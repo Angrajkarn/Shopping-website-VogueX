@@ -15,7 +15,7 @@ $ErrorActionPreference = "Stop"
 
 # Configuration Variables
 $AwsRegion = "ap-south-1" # Replace with your preferred region
-$InstanceType = "t3.medium"
+$InstanceType = "t3.micro"
 $AmiNamePattern = "al2023-ami-2023.*-x86_64" # Amazon Linux 2023
 $SecurityGroupName = "VogueX-Web-SG"
 $KeyName = "voguex-deploy-key" 
@@ -88,6 +88,14 @@ exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 echo "Starting deployment setup..."
 
+# Create 2GB Swap file for Free Tier (1GB RAM is not enough for Next.js build)
+echo "Creating swap space..."
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
+
 # Install Git and Docker
 dnf update -y
 dnf install -y git cronie
@@ -146,6 +154,7 @@ $InstanceId = (aws ec2 run-instances `
         --instance-type $InstanceType `
         --key-name $KeyName `
         --security-group-ids $SgId `
+        --block-device-mappings "DeviceName=/dev/xvda,Ebs={VolumeSize=16,VolumeType=gp3}" `
         --user-data $UserDataEncoded `
         --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=VogueX-Server}]" `
         --query "Instances[0].InstanceId" `

@@ -305,59 +305,120 @@ class ProductScraperView(APIView):
 
 class VoiceCommandView(APIView):
     """
-    Production-Grade Intent Engine.
+    Advanced Intent Engine.
     Processes natural language commands on the server for security and extensibility.
+    Uses Keyword Scoring and Context Data (Path, ProductID) for intelligent routing.
     """
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         command = request.data.get('command', '').lower().strip()
+        context = request.data.get('context', {})
         
-        response = {
-            "action": "none",
-            "val": None,
-            "message": "I didn't quite catch that."
+        # 1. Define Intents with Keyword Weighting
+        INTENTS = {
+            "navigate_home": {
+                "keywords": ["home", "main", "start", "index", "landing"],
+                "action": "navigate", "val": "/", "msg": "Taking you home."
+            },
+            "open_cart": {
+                "keywords": ["cart", "bag", "checkout", "basket", "buy"],
+                "action": "navigate", "val": "/cart", "msg": "Opening your shopping bag."
+            },
+            "shop_men": {
+                "keywords": ["men", "mens", "male", "guy", "boy", "gentlemen"],
+                "action": "navigate", "val": "/shop?category=men", "msg": "Showing Men's collection."
+            },
+            "shop_women": {
+                "keywords": ["women", "woman", "ladies", "girl", "female"],
+                "action": "navigate", "val": "/shop?category=women", "msg": "Showing Women's collection."
+            },
+            "scroll_down": {
+                "keywords": ["scroll down", "go down", "move down", "lower", "swipe down"],
+                "action": "scroll_window", "val": 600, "msg": ""
+            },
+            "scroll_up": {
+                "keywords": ["scroll up", "go up", "move up", "higher", "swipe up"],
+                "action": "scroll_window", "val": -600, "msg": ""
+            },
+            "scroll_top": {
+                "keywords": ["top", "beginning", "header", "up"],
+                "action": "scroll_top", "val": 0, "msg": "Back to top."
+            },
+            "show_deals": {
+                "keywords": ["sale", "offer", "deal", "discount", "cheapest", "promo"],
+                "action": "scroll", "val": "luxe-zone-trigger", "msg": "Checking latest offers."
+            },
+            "refresh": {
+                "keywords": ["refresh", "reload", "update", "restart"],
+                "action": "reload", "val": None, "msg": "Refreshing page."
+            }
         }
 
-        # 1. Navigation Intention
-        if any(w in command for w in ['home', 'main page', 'start']):
-            response = { "action": "navigate", "val": "/", "message": "Taking you home." }
-        
-        elif any(w in command for w in ['cart', 'bag', 'checkout', 'basket']):
-            response = { "action": "navigate", "val": "/cart", "message": "Opening your cart." }
+        # 2. Context-Aware Intention (Add to Cart / Product Info)
+        if any(w in command for w in ['add', 'get', 'want', 'buy']) and ('cart' in command or 'bag' in command):
+            prod_id = context.get('productId')
+            if prod_id:
+                # In a real app, we'd trigger a server-side cart update here.
+                # For now, we signal the frontend to handle it or give a confirmation msg.
+                return Response({
+                    "action": "none",
+                    "val": None,
+                    "message": "I've noted your interest. Please click the 'Add to Cart' button to confirm your size!"
+                })
+            else:
+                return Response({
+                    "action": "none",
+                    "val": None,
+                    "message": "I can only add products when you are on a product page. Try 'show me men's shirts'."
+                })
 
-        # 2. Product Categories
-        elif 'men' in command and 'women' not in command:
-             response = { "action": "navigate", "val": "/shop?category=men", "message": "Showing Men's collection." }
+        # 3. Fuzzy Match via Keyword Scoring
+        best_intent = None
+        max_score = 0
         
-        elif any(w in command for w in ['women', 'woman', 'ladies', 'girl']):
-             response = { "action": "navigate", "val": "/shop?category=women", "message": "Showing Women's collection." }
-             
-        elif any(w in command for w in ['sale', 'offer', 'deal', 'discount']):
-             response = { "action": "scroll", "val": "luxe-zone-trigger", "message": "Checking latest offers." }
+        for intent_id, config in INTENTS.items():
+            # Exact word match gets higher score
+            score = sum(3 if f" {w} " in f" {command} " else (1 if w in command else 0) for w in config['keywords'])
+            if score > max_score:
+                max_score = score
+                best_intent = config
 
-        # 3. Search Intention (highest priority if explicit)
-        elif any(w in command for w in ['search', 'find', 'looking for', 'show me']):
-            # Extract query
-            remove_words = ['search', 'find', 'looking for', 'show me', 'for']
+        # Apply threshold to avoid false positives
+        if best_intent and max_score >= 1:
+            return Response({
+                "action": best_intent['action'],
+                "val": best_intent['val'],
+                "message": best_intent['msg']
+            })
+
+        # 4. Explicit Search (Fallback)
+        search_triggers = ['search', 'find', 'looking for', 'show me', 'where is', 'query']
+        if any(w in command for w in search_triggers):
             query = command
-            for w in remove_words:
+            for w in search_triggers:
                 query = query.replace(w, "")
             query = query.strip()
-            
             if query:
-                response = { "action": "navigate", "val": f"/shop?search={query}", "message": f"Searching for {query}." }
-            else:
-                response = { "action": "none", "val": None, "message": "What should I search for?" }
+                return Response({
+                    "action": "navigate",
+                    "val": f"/shop?search={query}",
+                    "message": f"Searching for {query}."
+                })
 
-        # 4. Scroll Control
-        elif 'scroll' in command or 'go down' in command or 'move' in command:
-            if 'down' in command:
-                response = { "action": "scroll_window", "val": 600, "message": "" }
-            elif 'up' in command:
-                response = { "action": "scroll_window", "val": -600, "message": "" }
-            elif 'top' in command:
-                response = { "action": "scroll_top", "val": 0, "message": "Back to top." }
+        # 5. Generic Category Search (e.g. "show me dresses")
+        common_categories = ['dress', 'shirt', 'jeans', 'watch', 'bag', 'shoe', 'accessory']
+        for cat in common_categories:
+            if cat in command:
+                return Response({
+                    "action": "navigate",
+                    "val": f"/shop?search={cat}",
+                    "message": f"Looking for {cat}es."
+                })
 
-        return Response(response)
+        return Response({
+            "action": "none",
+            "val": None,
+            "message": "I didn't quite catch that. Try saying 'Go to cart' or 'Search for sneakers'."
+        })

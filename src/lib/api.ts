@@ -955,14 +955,14 @@ export const api = {
         return res.json()
     },
 
-    async processVoiceCommand(command: string) {
+    async processVoiceCommand(command: string, context: any = {}) {
         const url = `${BACKEND_URL}/products/voice/`
         const res = await fetch(url, {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ command })
+            body: JSON.stringify({ command, context })
         })
         if (!res.ok) throw new Error("Voice connect failed")
         return res.json()
