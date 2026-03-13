@@ -92,7 +92,9 @@ class AffinityProfileView(APIView):
         scores = {}
         
         for i in interactions[:200]: # Look back at last 200 signals
-            category = i.metadata.get('category')
+            # Handle potential None metadata
+            meta = i.metadata or {}
+            category = meta.get('category')
             if not category: continue
 
             weight = 0
@@ -198,6 +200,7 @@ class HistoryView(APIView):
                 seen.add(pid)
                 
                 # Extract details from metadata (Snapshot of product at time of view)
+                # Handle potential None metadata
                 meta = i.metadata or {}
                 
                 # Only add if we have at least a title (valid view)
