@@ -3,9 +3,9 @@ services:
     build: .
     image: voguex-frontend
     ports:
-      - "3000:3000"
+      - "80:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://65.1.73.183:8000/api
+      - NEXT_PUBLIC_API_URL=http://13.235.254.172:8000/api
     depends_on:
       - backend
     restart: always
