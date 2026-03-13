@@ -11,6 +11,7 @@ services:
     restart: always
 
   backend:
+    build: ./backend
     image: voguex-backend
     command: gunicorn -c gunicorn.conf.py config.asgi:application
     ports:
