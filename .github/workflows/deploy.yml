@@ -1,0 +1,25 @@
+name: CD - Deploy to AWS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to AWS EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ec2-user
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            cd ~/app
+            git pull origin main
+            # Restart containers to pick up changes
+            # We use --build to ensure any backend changes or dockerfile changes are applied
+            docker-compose -f docker-compose.prod.yml up -d --build
