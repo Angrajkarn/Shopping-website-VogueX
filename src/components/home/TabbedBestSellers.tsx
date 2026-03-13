@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Star, Heart, ShoppingBag, Loader2 } from "lucide-react"
 import { formatPrice, createProductSlug } from "@/lib/utils"
 import { getProducts } from "@/lib/api"
+import { affinityEngine } from "@/lib/affinity-engine"
 
 const tabs = ["Best Sellers", "New Arrivals", "Top Rated"]
 
