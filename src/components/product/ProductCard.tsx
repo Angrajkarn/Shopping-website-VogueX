@@ -28,7 +28,7 @@ import { useState, useEffect } from "react"
 import { UrgencyBadge } from "./UrgencyBadge"
 import { useCollaboration } from "@/context/CollaborationContext"
 
-export function ProductCard({ id, name, price, image, category, isExternal }: ProductCardProps) {
+export function ProductCard({ id, name, price, image, category }: ProductCardProps) {
     const addItem = useCartStore((state) => state.addItem)
     const { token, isAuthenticated } = useAuthStore()
     const { broadcastEvent } = useCollaboration()
