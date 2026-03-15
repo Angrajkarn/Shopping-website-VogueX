@@ -34,7 +34,6 @@ INSTALLED_APPS = [
     'orders.apps.OrdersConfig',
     'payments',
     'analytics',
-    'loyalty',
     'collaboration',
     'giftcards',
     'sellers',

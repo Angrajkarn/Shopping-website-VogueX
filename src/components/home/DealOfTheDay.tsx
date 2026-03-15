@@ -7,7 +7,6 @@ import { Clock, ChevronRight, ChevronLeft } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { formatPrice, createProductSlug } from "@/lib/utils"
-import { useLoyalty } from "@/context/VogueXCoinsContext"
 import { useEffect } from "react"
 
 const deals = [
@@ -60,12 +59,6 @@ const deals = [
 
 export function DealOfTheDay() {
     const scrollContainerRef = useRef<HTMLDivElement>(null)
-    const { awardCoins } = useLoyalty()
-
-    useEffect(() => {
-        // Award coins for exploring deals
-        awardCoins('daily_deals_view', 25, 'Checked Deal of the Day')
-    }, [])
 
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {

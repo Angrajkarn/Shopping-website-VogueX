@@ -11,10 +11,8 @@ import { Toaster } from "sonner";
 import { ExitIntentPopup } from "@/components/ui/ExitIntentPopup";
 import { GlobalLoader } from "@/components/ui/GlobalLoader";
 import { VoiceControlProvider } from "@/context/VoiceControlContext";
-import { VogueXCoinsProvider } from "@/context/VogueXCoinsContext";
 import { CollaborationProvider } from "@/context/CollaborationContext";
 import { VoiceOrb } from "@/components/voice/VoiceOrb";
-import { CoinWallet } from "@/components/loyalty/CoinWallet";
 import { CollaborationToolbar } from "@/components/collaboration/CollaborationToolbar";
 import { CollaborationOverlays } from "@/components/collaboration/CollaborationOverlays";
 
@@ -36,8 +34,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className={cn(inter.className, "min-h-screen flex flex-col")} suppressHydrationWarning>
         <VoiceControlProvider>
-          <VogueXCoinsProvider>
-            <CollaborationProvider>
+          <CollaborationProvider>
               <Suspense fallback={null}>
                 <GlobalLoader />
               </Suspense>
@@ -49,13 +46,7 @@ export default function RootLayout({
                 {children}
               </MainLayoutWrapper>
               <VoiceOrb />
-              <CoinWallet />
-              <CollaborationToolbar />
-              <CollaborationOverlays />
-              <ExitIntentPopup />
-              <Toaster position="top-center" richColors />
             </CollaborationProvider>
-          </VogueXCoinsProvider>
         </VoiceControlProvider>
       </body>
     </html>

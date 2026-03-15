@@ -26,8 +26,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
-    super_coins = models.IntegerField(default=0)
-    is_plus_member = models.BooleanField(default=False)
     is_seller = models.BooleanField(default=False)
 
     objects = UserManager()
@@ -43,7 +41,6 @@ class Notification(models.Model):
         ('order', 'Order Update'),
         ('promo', 'Promotion'),
         ('system', 'System Alert'),
-        ('coin', 'SuperCoin Reward'),
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     title = models.CharField(max_length=255)

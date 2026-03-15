@@ -874,17 +874,6 @@ export const api = {
         }
     },
 
-    async getLoyaltyDashboard(token: string) {
-        const url = `${BACKEND_URL}/loyalty/dashboard/`
-        const headers: any = {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        }
-
-        const res = await fetch(url, { headers })
-        if (!res.ok) throw new Error("Failed to fetch loyalty data")
-        return res.json()
-    },
 
     async validateGiftCard(token: string, code: string) {
         const res = await fetch(`${BACKEND_URL}/giftcards/validate/`, {
@@ -968,27 +957,6 @@ export const api = {
         return res.json()
     },
 
-    async awardCoins(action: string, amount: number, description: string) {
-        const url = `${BACKEND_URL}/loyalty/award/`
-        const headers: any = { "Content-Type": "application/json" }
-        
-        // Get token from zustand storage if logged in
-        if (typeof window !== 'undefined') {
-            const storage = localStorage.getItem('auth-storage')
-            if (storage) {
-                const { state } = JSON.parse(storage)
-                if (state?.token) headers['Authorization'] = `Bearer ${state.token}`
-            }
-        }
-
-        const res = await fetch(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ action, amount, description })
-        })
-        if (!res.ok) throw new Error("Failed to award coins")
-        return res.json()
-    }
 }
 
 // Export standalone functions for backward compatibility if needed, 
