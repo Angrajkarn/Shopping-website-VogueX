@@ -56,6 +56,11 @@ export default function Home() {
   ]);
 
   const { sessionId, track } = useAnalytics();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchLayout = async () => {
@@ -184,7 +189,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 overflow-x-hidden font-sans text-slate-900">
       <AnimatePresence>
-        {sectionOrder.map(key => (
+        {mounted && sectionOrder.map(key => (
           <motion.div key={key} layout>
             {components[key]}
           </motion.div>
