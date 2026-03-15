@@ -25,6 +25,8 @@ export const metadata: Metadata = {
   description: "Experience the future of fashion with VOGUEX.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{
